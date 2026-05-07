@@ -118,6 +118,7 @@ Frontend provides the administrative interface.
 
 Project Structure
 
+```text
 SocialGroupOptimizer
 ├── MyProject.Core
 │   └── Domain
@@ -151,6 +152,7 @@ SocialGroupOptimizer
     ├── DTOs
     ├── Requests
     └── Responses
+```
 
 Core Layer
 MyProject.Core
@@ -162,6 +164,8 @@ It contains the central business concepts, but not heavy business logic implemen
 It does not know about the database, API, frontend, or external infrastructure.
 
 Core Structure
+
+```text
 MyProject.Core
 └── Domain
     ├── Entities
@@ -169,6 +173,7 @@ MyProject.Core
     ├── Enums
     ├── Constraints
     └── Interfaces
+```
 
 Domain Entities
 Domain/Entities
