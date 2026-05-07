@@ -1,0 +1,27 @@
+namespace MyProject.Core.Domain.Enums;
+
+/// <summary>
+/// קטגוריות אילוצים קשים נתמכות בדומיין.
+/// </summary>
+public enum ConstraintType
+{
+    /// <summary>
+    /// אילוץ על גודל קבוצה (מינימום/מקסימום משתתפים).
+    /// </summary>
+    GroupSize = 1,
+
+    /// <summary>
+    /// דורש שמשתתפים יוקצו לאותה קבוצה.
+    /// </summary>
+    MustLink = 2,
+
+    /// <summary>
+    /// אוסר שמשתתפים יוקצו לאותה קבוצה.
+    /// </summary>
+    CannotLink = 3,
+
+    /// <summary>
+    /// אילוץ על איזון/חלוקת סיווגים בין קבוצות.
+    /// </summary>
+    ClassificationBalance = 4
+}

@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="MyProject.App/MyProject.BL.csproj" />
+  <Project Path="MyProject.Core/MyProject.Core.csproj" />
+  <Project Path="MyProject.Data/MyProject.Data.csproj" />
+  <Project Path="MyProject/MyProject.API.csproj" />
+</Solution>
