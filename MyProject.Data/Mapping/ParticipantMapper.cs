@@ -23,8 +23,8 @@ public static class ParticipantMapper
     /// <param name="classificationAttributes">מאפייני סיווג לצורך המרת שם למבנה הליבה.</param>
     /// <param name="socialPreferences">העדפות חברתיות הקשורות לאותה ריצת שיבוץ.</param>
     /// <param name="context">הקשר הממפה בין שיבוץ משתתף למזהה משתתף (מפתח מספרי בשכבת הנתונים).</param>
-    /// <param name="participantIdentityByParticipantId">מיפוי ממפתח משתתף מספרי למזהה ליבה (מספר זהות).</param>
-    /// <param name="assignmentId">מזהה ריצת השיבוץ לסינון העדפות.</param>
+    /// <param name="participantIdentityByDbParticipantId">מיפוי ממפתח משתתף מספרי במסד למזהה ליבה (מספר זהות).</param>
+    /// <param name="assignmentDbId">מזהה שיבוץ פנימי במסד לצורך סינון העדפות.</param>
     /// <returns>משתתף בשכבת הליבה.</returns>
     /// <exception cref="ArgumentNullException">נזרק כאשר אחד מהפרמטרים הנדרשים הוא null.</exception>
     /// <exception cref="InvalidOperationException">נזרק כאשר הנתונים אינם ניתנים למיפוי חד משמעי.</exception>
@@ -34,8 +34,8 @@ public static class ParticipantMapper
         IEnumerable<ClassificationAttribute> classificationAttributes,
         IEnumerable<SocialPreference> socialPreferences,
         ParticipantAssignmentContext context,
-        IReadOnlyDictionary<int, ParticipantId> participantIdentityByParticipantId,
-        int assignmentId)
+        IReadOnlyDictionary<int, ParticipantId> participantIdentityByDbParticipantId,
+        int assignmentDbId)
     {
         if (participant is null)
         {
@@ -62,25 +62,26 @@ public static class ParticipantMapper
             throw new ArgumentNullException(nameof(context));
         }
 
-        if (participantIdentityByParticipantId is null)
+        if (participantIdentityByDbParticipantId is null)
         {
-            throw new ArgumentNullException(nameof(participantIdentityByParticipantId));
+            throw new ArgumentNullException(nameof(participantIdentityByDbParticipantId));
         }
 
-        if (participant.ParticipantId <= 0)
+        var dbParticipantId = participant.ParticipantId;
+        if (dbParticipantId <= 0)
         {
             throw new InvalidOperationException("ParticipantId must be greater than zero.");
         }
 
-        if (!participantIdentityByParticipantId.TryGetValue(participant.ParticipantId, out var participantId))
+        if (!participantIdentityByDbParticipantId.TryGetValue(dbParticipantId, out var participantId))
         {
-            throw new InvalidOperationException($"Missing domain participant identity for ParticipantId {participant.ParticipantId}.");
+            throw new InvalidOperationException($"Missing domain participant identity for DbParticipantId {dbParticipantId}.");
         }
 
         var attributeById = classificationAttributes.ToDictionary(a => a.ClassificationAttributeId);
         var classifications = new List<ClassificationType>();
 
-        foreach (var row in participantClassifications.Where(c => c.ParticipantId == participant.ParticipantId))
+        foreach (var row in participantClassifications.Where(c => c.ParticipantId == dbParticipantId))
         {
             if (!attributeById.TryGetValue(row.ClassificationAttributeId, out var attribute))
             {
@@ -96,11 +97,11 @@ public static class ParticipantMapper
         }
 
         var prefsForParticipant = socialPreferences
-            .Where(p => p.AssignmentId == assignmentId)
-            .Where(p => context.GetParticipantId(p.FromParticipantAssignmentId) == participant.ParticipantId)
+            .Where(p => p.AssignmentId == assignmentDbId)
+            .Where(p => context.GetDbParticipantId(p.FromParticipantAssignmentId) == dbParticipantId)
             .ToList();
 
-        var preferences = MapPreferences(prefsForParticipant, context, participantIdentityByParticipantId, participantId);
+        var preferences = MapPreferences(prefsForParticipant, context, participantIdentityByDbParticipantId);
 
         return new CoreParticipant(participantId, classifications, preferences);
     }
@@ -145,8 +146,7 @@ public static class ParticipantMapper
     private static List<CorePreference> MapPreferences(
         IReadOnlyList<SocialPreference> prefsForParticipant,
         ParticipantAssignmentContext context,
-        IReadOnlyDictionary<int, ParticipantId> participantIdentityByParticipantId,
-        ParticipantId selfId)
+        IReadOnlyDictionary<int, ParticipantId> participantIdentityByDbParticipantId)
     {
         if (prefsForParticipant.Count == 0)
         {
@@ -158,34 +158,15 @@ public static class ParticipantMapper
             .ThenBy(p => p.ToParticipantAssignmentId)
             .ToList();
 
-        var ranks = new HashSet<int>();
-        var preferredIds = new HashSet<ParticipantId>();
-
         var preferences = new List<CorePreference>(ordered.Count);
         var rank = 1;
 
         foreach (var pref in ordered)
         {
-            if (ranks.Contains(rank))
+            var toDbParticipantId = context.GetDbParticipantId(pref.ToParticipantAssignmentId);
+            if (!participantIdentityByDbParticipantId.TryGetValue(toDbParticipantId, out var preferredParticipantId))
             {
-                throw new InvalidOperationException("Internal error: duplicate rank while mapping preferences.");
-            }
-
-            ranks.Add(rank);
-
-            var toDbParticipantId = context.GetParticipantId(pref.ToParticipantAssignmentId);
-            if (!participantIdentityByParticipantId.TryGetValue(toDbParticipantId, out var preferredParticipantId))
-            {
-                throw new InvalidOperationException($"Missing domain participant identity for ParticipantId {toDbParticipantId}.");
-            }
-            if (preferredParticipantId == selfId)
-            {
-                throw new InvalidOperationException("SocialPreference cannot target the same participant as the source.");
-            }
-
-            if (!preferredIds.Add(preferredParticipantId))
-            {
-                throw new InvalidOperationException("Duplicate preferred participant in social preferences for the same source.");
+                throw new InvalidOperationException($"Missing domain participant identity for DbParticipantId {toDbParticipantId}.");
             }
 
             preferences.Add(new CorePreference(preferredParticipantId, rank));

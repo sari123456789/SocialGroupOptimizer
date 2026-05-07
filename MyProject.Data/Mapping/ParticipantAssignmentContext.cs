@@ -10,7 +10,7 @@ namespace MyProject.Data.Mapping;
 /// </summary>
 public sealed class ParticipantAssignmentContext
 {
-    private readonly IReadOnlyDictionary<int, int> _participantIdByParticipantAssignmentId;
+    private readonly IReadOnlyDictionary<int, int> _dbParticipantIdByParticipantAssignmentId;
 
     /// <summary>
     /// מאתחל הקשר מתוך רשימת שורות שיבוץ משתתף.
@@ -41,24 +41,24 @@ public sealed class ParticipantAssignmentContext
             throw new InvalidOperationException("ParticipantId must be greater than zero for all participant assignments.");
         }
 
-        _participantIdByParticipantAssignmentId = rows.ToDictionary(
+        _dbParticipantIdByParticipantAssignmentId = rows.ToDictionary(
             r => r.ParticipantAssignmentId,
             r => r.ParticipantId);
     }
 
     /// <summary>
-    /// מחזיר את מזהה המשתתף לפי מזהה שיבוץ משתתף.
+    /// מחזיר את מזהה המשתתף הפנימי במסד לפי מזהה שיבוץ משתתף.
     /// </summary>
     /// <param name="participantAssignmentId">מזהה שיבוץ משתתף.</param>
-    /// <returns>מזהה משתתף.</returns>
+    /// <returns>מזהה משתתף פנימי במסד.</returns>
     /// <exception cref="InvalidOperationException">נזרק כאשר המזהה לא קיים בהקשר.</exception>
-    public int GetParticipantId(int participantAssignmentId)
+    public int GetDbParticipantId(int participantAssignmentId)
     {
-        if (!_participantIdByParticipantAssignmentId.TryGetValue(participantAssignmentId, out var participantId))
+        if (!_dbParticipantIdByParticipantAssignmentId.TryGetValue(participantAssignmentId, out var dbParticipantId))
         {
             throw new InvalidOperationException($"Unknown ParticipantAssignmentId: {participantAssignmentId}");
         }
 
-        return participantId;
+        return dbParticipantId;
     }
 }
