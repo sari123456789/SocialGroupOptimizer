@@ -23,5 +23,10 @@ public enum ConstraintType
     /// <summary>
     /// אילוץ על איזון/חלוקת סיווגים בין קבוצות.
     /// </summary>
-    ClassificationBalance = 4
+    ClassificationBalance = 4,
+
+    /// <summary>
+    /// אילוץ על מספר הקבוצות הנדרש בהקצאה.
+    /// </summary>
+    GroupCount = 5
 }
