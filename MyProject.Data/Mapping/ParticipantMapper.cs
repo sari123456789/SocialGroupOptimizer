@@ -101,7 +101,7 @@ public static class ParticipantMapper
             .Where(p => context.GetDbParticipantId(p.FromParticipantAssignmentId) == dbParticipantId)
             .ToList();
 
-        var preferences = MapPreferences(prefsForParticipant, context, participantIdentityByDbParticipantId);
+        var preferences = MapPreferences(prefsForParticipant, context, participantIdentityByDbParticipantId, participantId);
 
         return new CoreParticipant(participantId, classifications, preferences);
     }
@@ -146,7 +146,8 @@ public static class ParticipantMapper
     private static List<CorePreference> MapPreferences(
         IReadOnlyList<SocialPreference> prefsForParticipant,
         ParticipantAssignmentContext context,
-        IReadOnlyDictionary<int, ParticipantId> participantIdentityByDbParticipantId)
+        IReadOnlyDictionary<int, ParticipantId> participantIdentityByDbParticipantId,
+        ParticipantId selfId)
     {
         if (prefsForParticipant.Count == 0)
         {
@@ -158,6 +159,7 @@ public static class ParticipantMapper
             .ThenBy(p => p.ToParticipantAssignmentId)
             .ToList();
 
+        var preferredIds = new HashSet<ParticipantId>();
         var preferences = new List<CorePreference>(ordered.Count);
         var rank = 1;
 
@@ -167,6 +169,14 @@ public static class ParticipantMapper
             if (!participantIdentityByDbParticipantId.TryGetValue(toDbParticipantId, out var preferredParticipantId))
             {
                 throw new InvalidOperationException($"Missing domain participant identity for DbParticipantId {toDbParticipantId}.");
+            }
+            if (preferredParticipantId == selfId)
+            {
+                throw new InvalidOperationException("SocialPreference cannot target the same participant as the source.");
+            }
+            if (!preferredIds.Add(preferredParticipantId))
+            {
+                throw new InvalidOperationException("Duplicate preferred participant in social preferences for the same source.");
             }
 
             preferences.Add(new CorePreference(preferredParticipantId, rank));
