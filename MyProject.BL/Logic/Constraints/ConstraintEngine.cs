@@ -18,6 +18,8 @@ public sealed class ConstraintEngine : IAssignmentValidator
     private readonly MandatoryPairValidator _mandatoryPairValidator;
     private readonly ForbiddenPairValidator _forbiddenPairValidator;
     private readonly ClassificationBalanceValidator _classificationBalanceValidator;
+    private readonly ClassificationProportionalBalanceValidator _classificationProportionalBalanceValidator;
+    private readonly ClassificationHomogeneousGroupValidator _classificationHomogeneousGroupValidator;
 
     /// <summary>
     /// מאתחל מופע חדש של <see cref="ConstraintEngine"/> עם המאמתים הסטנדרטיים.
@@ -29,6 +31,8 @@ public sealed class ConstraintEngine : IAssignmentValidator
         _mandatoryPairValidator = new MandatoryPairValidator();
         _forbiddenPairValidator = new ForbiddenPairValidator();
         _classificationBalanceValidator = new ClassificationBalanceValidator();
+        _classificationProportionalBalanceValidator = new ClassificationProportionalBalanceValidator();
+        _classificationHomogeneousGroupValidator = new ClassificationHomogeneousGroupValidator();
     }
 
     /// <inheritdoc/>
@@ -54,12 +58,16 @@ public sealed class ConstraintEngine : IAssignmentValidator
         var mandatoryPairConstraints = constraints.OfType<MandatoryPairConstraint>().ToList();
         var forbiddenPairConstraints = constraints.OfType<ForbiddenPairConstraint>().ToList();
         var classificationBalanceConstraints = constraints.OfType<ClassificationBalanceConstraint>().ToList();
+        var classificationProportionalBalanceConstraints = constraints.OfType<ClassificationProportionalBalanceConstraint>().ToList();
+        var classificationHomogeneousGroupConstraints = constraints.OfType<ClassificationHomogeneousGroupConstraint>().ToList();
 
         allErrors.AddRange(_groupSizeValidator.Validate(assignment, groupSizeConstraints));
         allErrors.AddRange(_groupCountValidator.Validate(assignment, groupCountConstraints));
         allErrors.AddRange(_mandatoryPairValidator.Validate(assignment, mandatoryPairConstraints));
         allErrors.AddRange(_forbiddenPairValidator.Validate(assignment, forbiddenPairConstraints));
         allErrors.AddRange(_classificationBalanceValidator.Validate(assignment, classificationBalanceConstraints));
+        allErrors.AddRange(_classificationProportionalBalanceValidator.Validate(assignment, classificationProportionalBalanceConstraints));
+        allErrors.AddRange(_classificationHomogeneousGroupValidator.Validate(assignment, classificationHomogeneousGroupConstraints));
 
         errors = allErrors;
         return allErrors.Count == 0;
