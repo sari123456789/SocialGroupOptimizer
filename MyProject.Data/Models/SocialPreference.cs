@@ -1,24 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MyProject.Data.Models;
 
-namespace MyProject.Data.Models
+/// <summary>
+/// העדפה חברתית בין שני שיבוצי משתתף באותה ריצת שיבוץ.
+/// </summary>
+public class SocialPreference
 {
-    //העדפות חברתיות
-    public class SocialPreference
-    {
-        // קוד משתתף לשיבוץ - מכניס ההעדפה (מפתח זר)
-        public int FromParticipantAssignmentId { get; set; }
+    /// <summary>מזהה שורת השיבוץ של מכניס ההעדפה (מפתח זר ל־ParticipantAssignment).</summary>
+    public int FromParticipantAssignmentId { get; set; }
 
-        // קוד משתתף לשיבוץ - משתתף מועדף (מפתח זר)
-        public int ToParticipantAssignmentId { get; set; }
+    /// <summary>מזהה שורת השיבוץ של המשתתף המועדף.</summary>
+    public int ToParticipantAssignmentId { get; set; }
 
-        // משקל ההעדפה
-        public int PreferenceWeight { get; set; }
+    public int PreferenceWeight { get; set; }
 
-        // קוד שיבוץ - מפתח זר
-        public int AssignmentId { get; set; }
-    }
+    public int AssignmentId { get; set; }
+
+    public ParticipantAssignment? FromParticipantAssignment { get; set; }
+
+    public ParticipantAssignment? ToParticipantAssignment { get; set; }
+
+    public Assignment? Assignment { get; set; }
 }

@@ -1,25 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MyProject.Data.Models;
 
-namespace MyProject.Data.Models
+/// <summary>
+/// מסגרת שיבוץ או ריצה במערכת (שכבת נתונים). מזהה השיבוץ במסד הוא מספרי; מיפוי ל־<see cref="MyProject.Core.Domain.ValueObjects.AssignmentId"/> נעשה בשכבות עליונות.
+/// </summary>
+public class Assignment
 {
-    //שיבוצים
-    /// <summary>
-    /// ישות נתונים המייצגת מסגרת שיבוץ או ריצה בתוך המערכת.
-    /// זה אינו פתרון החלוקה לקבוצות מהשכבה הפנימית.
-    /// </summary>
-    public class Assignment
-    {
-        // קוד שיבוץ - מפתח ראשי
-        public int AssignmentId { get; set; }
+    /// <summary>מפתח ראשי — מזהה שיבוץ פנימי במסד.</summary>
+    public int AssignmentId { get; set; }
 
-        // שם שיבוץ
-        public string AssignmentName { get; set; }
+    public string AssignmentName { get; set; } = string.Empty;
 
-        // קוד קבוצת ניהול - מפתח זר
-        public int ManagementGroupId { get; set; }
-    }
+    public int ManagementGroupId { get; set; }
 }

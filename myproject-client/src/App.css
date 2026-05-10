@@ -1,0 +1,38 @@
+.app-shell {
+  max-width: 40rem;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+.card {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  background: #fafafa;
+}
+
+.hint {
+  color: #444;
+  font-size: 0.95rem;
+}
+
+.ok {
+  color: #0a5;
+}
+
+.error {
+  color: #a30;
+}
+
+.concepts {
+  padding-inline-start: 1.25rem;
+}
+
+code {
+  background: #eee;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}

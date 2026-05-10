@@ -1,24 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MyProject.Data.Models;
 
-namespace MyProject.Data.Models
+/// <summary>
+/// אילוץ גודל קבוצה לשיבוץ.
+/// </summary>
+public class GroupSizeConstraint
 {
-    //אילוצי גודל קבוצה
-    public class GroupSizeConstraint
-    {
-        // קוד קבוצה - מפתח זר
-        public int GroupId { get; set; }
+    public int GroupId { get; set; }
 
-        // קוד שיבוץ - מפתח זר
-        public int AssignmentId { get; set; }
+    public int AssignmentId { get; set; }
 
-        // גודל מינימלי לקבוצה
-        public int MinGroupSize { get; set; }
+    public int MinGroupSize { get; set; }
 
-        // גודל מקסימלי לקבוצה
-        public int MaxGroupSize { get; set; }
-    }
+    public int MaxGroupSize { get; set; }
 }

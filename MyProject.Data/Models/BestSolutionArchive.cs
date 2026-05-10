@@ -1,27 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MyProject.Data.Models;
 
-namespace MyProject.Data.Models
+/// <summary>
+/// ארכיון שיא לריצת אלגוריתם.
+/// </summary>
+public class BestSolutionArchive
 {
-    //ארכיון שיאים
-    public class BestSolutionArchive
-    {
-        // קוד ריצה - מזהה ייחודי לכל הרצת אלגוריתם
-        public int RunId { get; set; }
+    public Guid RunId { get; set; }
 
-        // מספר איטרציה - באיזה שלב נמצא השיא
-        public int IterationNumber { get; set; }
+    public double BestScore { get; set; }
 
-        // ציון שיא - הציון הטוב ביותר שהושג
-        public double BestScore { get; set; }
+    public string SolutionStateBlob { get; set; } = string.Empty;
 
-        // מצב פתרון - שמירת כל מבנה החלוקה (למשל JSON / BLOB)
-        public string SolutionStateBlob { get; set; }
-
-        // האם בוצע ניעור (Diversification) לפני מציאת הפתרון
-        public bool WasDiversified { get; set; }
-    }
+    public bool WasDiversified { get; set; }
 }

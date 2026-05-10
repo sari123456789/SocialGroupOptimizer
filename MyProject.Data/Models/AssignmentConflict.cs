@@ -1,27 +1,19 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MyProject.Data.Models;
 
-namespace MyProject.Data.Models
+/// <summary>
+/// רשומת קונפליקט או בעיה הקשורה לשיבוץ.
+/// </summary>
+public class AssignmentConflict
 {
-    //קונפליקטים ובעיות
-    public class AssignmentConflict
-    {
-        // קוד שיבוץ - מפתח זר
-        public int AssignmentId { get; set; }
+    public int AssignmentConflictId { get; set; }
 
-        // סוג קונפליקט (למשל: סתירת העדפות / אילוץ קשיח)
-        public string ConflictType { get; set; }
+    public int AssignmentId { get; set; }
 
-        // תיאור הקונפליקט בפירוט
-        public string Description { get; set; }
+    public string ConflictType { get; set; } = string.Empty;
 
-        // חומרת הבעיה (אזהרה / קריטי)
-        public string Severity { get; set; }
+    public string Description { get; set; } = string.Empty;
 
-        // המלצת מערכת לפתרון
-        public string SystemRecommendation { get; set; }
-    }
+    public string Severity { get; set; } = string.Empty;
+
+    public string SystemRecommendation { get; set; } = string.Empty;
 }

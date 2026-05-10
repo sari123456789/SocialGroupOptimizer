@@ -1,25 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MyProject.Data.Models;
 
-namespace MyProject.Data.Models
+/// <summary>
+/// אילוץ חובה או איסור לשיבוץ.
+/// </summary>
+public class MandatoryConstraint
 {
-    //אילוצי חובה ואסור
-    public class MandatoryConstraint
-    {
-        // קוד אילוץ חובה/אסור - מפתח ראשי
-        public int MandatoryConstraintId { get; set; }
+    public int MandatoryConstraintId { get; set; }
 
-        // קוד שיבוץ - מפתח זר
-        public int AssignmentId { get; set; }
+    public int AssignmentId { get; set; }
 
-        // שם אילוץ
-        public string ConstraintName { get; set; }
+    public string ConstraintName { get; set; } = string.Empty;
 
-        // אילוץ חובה או איסור
-        public bool IsMandatory { get; set; }
-    }
+    public bool IsMandatory { get; set; }
 }
-

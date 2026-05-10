@@ -1,18 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MyProject.Data.Models;
 
-namespace MyProject.Data.Models
+/// <summary>
+/// קישור משתתף למאפיין סיווג.
+/// </summary>
+public class ParticipantClassification
 {
-    //סיווגים למשתתפים
-    public class ParticipantClassification
-    {
-        // קוד משתתף - מפתח זר
-        public int ParticipantId { get; set; }
+    public int ParticipantId { get; set; }
 
-        // קוד מאפיין הסיווג - מפתח זר
-        public int ClassificationAttributeId { get; set; }
-    }
+    public int ClassificationAttributeId { get; set; }
 }

@@ -9,3 +9,6 @@ obj/
 *.log
 TestResults/
 packages/
+*.db
+*.db-shm
+*.db-wal

@@ -1,23 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MyProject.Data.Models;
 
-namespace MyProject.Data.Models
+/// <summary>
+/// משתתף בשכבת הנתונים. מזהה המשתתף הפנימי הוא מספר סידורי במסד (לא מזהה ליבה).
+/// </summary>
+public class Participant
 {
-    //משתתף
-    public class Participant
-    {
-        // קוד משתתף - מפתח ראשי
-        public int ParticipantId { get; set; }
+    /// <summary>מפתח ראשי — מזהה פנימי במסד.</summary>
+    public int ParticipantId { get; set; }
 
-        /// <summary>
-        /// מספר זהות ישראלי (תשע ספרות). משמש למיפוי ל-<see cref="MyProject.Core.Domain.ValueObjects.ParticipantId"/>.
-        /// </summary>
-        public string IsraeliIdentityNumber { get; set; } = string.Empty;
+    /// <summary>מספר זהות ישראלי (תשע ספרות); משמש לבניית <see cref="MyProject.Core.Domain.ValueObjects.ParticipantId"/> בשכבת הליבה.</summary>
+    public string IsraeliIdentityNumber { get; set; } = string.Empty;
 
-        // שם משתתף
-        public string ParticipantName { get; set; }
-    }
+    public string? ParticipantName { get; set; }
 }

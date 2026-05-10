@@ -1,21 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace MyProject.Data.Models;
 
-namespace MyProject.Data.Models
+public class ClassificationAttribute
 {
-    //מאפייני סיווגים
-    public class ClassificationAttribute
-    {
-        // קוד מאפיין הסיווג - מפתח ראשי
-        public int ClassificationAttributeId { get; set; }
+    public int ClassificationAttributeId { get; set; }
 
-        // קוד סיווג - מפתח זר
-        public int ClassificationId { get; set; }
+    public int ClassificationId { get; set; }
 
-        // מאפיין הסיווג
-        public string AttributeName { get; set; }
-    }
+    public string AttributeName { get; set; } = string.Empty;
 }
