@@ -15,8 +15,8 @@ public sealed class ApplicationDbContext : DbContext
 
     public DbSet<Manager> Managers => Set<Manager>();
     public DbSet<ManagementGroup> ManagementGroups => Set<ManagementGroup>();
-    public DbSet<Classification> Classifications => Set<Classification>();
-    public DbSet<ClassificationAttribute> ClassificationAttributes => Set<ClassificationAttribute>();
+    public DbSet<ClassificationDimension> ClassificationDimensions => Set<ClassificationDimension>();
+    public DbSet<ClassificationLevel> ClassificationLevels => Set<ClassificationLevel>();
     public DbSet<Participant> Participants => Set<Participant>();
     public DbSet<Assignment> Assignments => Set<Assignment>();
     public DbSet<ParticipantAssignment> ParticipantAssignments => Set<ParticipantAssignment>();
@@ -24,8 +24,8 @@ public sealed class ApplicationDbContext : DbContext
     public DbSet<SocialPreference> SocialPreferences => Set<SocialPreference>();
     public DbSet<GroupSizeConstraint> GroupSizeConstraints => Set<GroupSizeConstraint>();
     public DbSet<GroupCountConstraint> GroupCountConstraints => Set<GroupCountConstraint>();
-    public DbSet<MandatoryConstraint> MandatoryConstraints => Set<MandatoryConstraint>();
-    public DbSet<MandatoryConstraintAssignment> MandatoryConstraintAssignments => Set<MandatoryConstraintAssignment>();
+    public DbSet<MandatoryPairConstraint> MandatoryPairConstraints => Set<MandatoryPairConstraint>();
+    public DbSet<ForbiddenPairConstraint> ForbiddenPairConstraints => Set<ForbiddenPairConstraint>();
     public DbSet<AssignmentClassificationConstraint> AssignmentClassificationConstraints => Set<AssignmentClassificationConstraint>();
     public DbSet<BestSolutionArchive> BestSolutionArchives => Set<BestSolutionArchive>();
     public DbSet<AssignmentScoreBreakdown> AssignmentScoreBreakdowns => Set<AssignmentScoreBreakdown>();
@@ -49,30 +49,32 @@ public sealed class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<Classification>(e =>
+        // קטלוג סיווגים: מימד (עמודה) → רמות (ערכי תא). גלובלי — לא פר שיבוץ.
+        modelBuilder.Entity<ClassificationDimension>(e =>
         {
-            e.HasKey(c => c.ClassificationId);
-            e.Property(c => c.ClassificationName).HasMaxLength(256);
+            e.HasKey(c => c.ClassificationDimensionId);
+            e.Property(c => c.DimensionCode).HasMaxLength(256);
+            e.HasIndex(c => c.DimensionCode).IsUnique();
         });
 
-        modelBuilder.Entity<ClassificationAttribute>(e =>
+        modelBuilder.Entity<ClassificationLevel>(e =>
         {
-            e.HasKey(a => a.ClassificationAttributeId);
-            e.Property(a => a.AttributeName).HasMaxLength(128);
-            e.HasIndex(a => new { a.ClassificationId, a.AttributeName }).IsUnique();
-            e.HasOne<Classification>()
+            e.HasKey(a => a.ClassificationLevelId);
+            e.Property(a => a.LevelCode).HasMaxLength(128);
+            e.HasIndex(a => new { a.ClassificationDimensionId, a.LevelCode }).IsUnique();
+            e.HasOne<ClassificationDimension>()
                 .WithMany()
-                .HasForeignKey(a => a.ClassificationId)
+                .HasForeignKey(a => a.ClassificationDimensionId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Participant>(e =>
         {
-            e.HasKey(p => p.ParticipantId);
-            e.Property(p => p.ParticipantId).ValueGeneratedOnAdd();
-            e.Property(p => p.IsraeliIdentityNumber).HasMaxLength(9).IsRequired();
+            e.HasKey(p => p.ParticipantId);//מפתח ראשי — מזהה פנימי במסד.
+            e.Property(p => p.ParticipantId).ValueGeneratedOnAdd();//מזהה פנימי במסד מוגדר כמספר סידורי במסד (לא מזהה ליבה).
+            e.Property(p => p.IsraeliIdentityNumber).HasMaxLength(9).IsRequired();//מספר זהות ישראלי (תשע ספרות)
             e.Property(p => p.ParticipantName).HasMaxLength(256);
-            e.HasIndex(p => p.IsraeliIdentityNumber).IsUnique();
+            e.HasIndex(p => p.IsraeliIdentityNumber).IsUnique(); //מונע כפילויות במספר זהות
         });
 
         modelBuilder.Entity<Assignment>(e =>
@@ -104,16 +106,21 @@ public sealed class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // סיווג משתתף בריצה: ערך אחד למימד; מפתח (ParticipantAssignmentId, ClassificationDimensionId).
         modelBuilder.Entity<ParticipantClassification>(e =>
         {
-            e.HasKey(pc => new { pc.ParticipantId, pc.ClassificationAttributeId });
-            e.HasOne<Participant>()
+            e.HasKey(pc => new { pc.ParticipantAssignmentId, pc.ClassificationDimensionId });
+            e.HasOne<ParticipantAssignment>()
                 .WithMany()
-                .HasForeignKey(pc => pc.ParticipantId)
+                .HasForeignKey(pc => pc.ParticipantAssignmentId)
                 .OnDelete(DeleteBehavior.Cascade);
-            e.HasOne<ClassificationAttribute>()
+            e.HasOne<ClassificationDimension>()
                 .WithMany()
-                .HasForeignKey(pc => pc.ClassificationAttributeId)
+                .HasForeignKey(pc => pc.ClassificationDimensionId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne<ClassificationLevel>()
+                .WithMany()
+                .HasForeignKey(pc => pc.ClassificationLevelId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
@@ -152,40 +159,53 @@ public sealed class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<MandatoryConstraint>(e =>
+        modelBuilder.Entity<MandatoryPairConstraint>(e =>
         {
-            e.HasKey(m => m.MandatoryConstraintId);
-            e.Property(m => m.MandatoryConstraintId).ValueGeneratedOnAdd();
-            e.Property(m => m.ConstraintName).HasMaxLength(256);
-            e.HasOne<Assignment>()
+            e.HasKey(m => m.MandatoryPairConstraintId);
+            e.Property(m => m.MandatoryPairConstraintId).ValueGeneratedOnAdd();
+            e.HasOne(m => m.Assignment)
                 .WithMany()
                 .HasForeignKey(m => m.AssignmentId)
                 .OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(m => m.FirstParticipantAssignment)
+                .WithMany()
+                .HasForeignKey(m => m.FirstParticipantAssignmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(m => m.SecondParticipantAssignment)
+                .WithMany()
+                .HasForeignKey(m => m.SecondParticipantAssignmentId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
-        modelBuilder.Entity<MandatoryConstraintAssignment>(e =>
+        modelBuilder.Entity<ForbiddenPairConstraint>(e =>
         {
-            e.HasKey(x => new { x.MandatoryConstraintId, x.ParticipantAssignmentId });
-            e.HasOne<MandatoryConstraint>()
+            e.HasKey(f => f.ForbiddenPairConstraintId);
+            e.Property(f => f.ForbiddenPairConstraintId).ValueGeneratedOnAdd();
+            e.HasOne(f => f.Assignment)
                 .WithMany()
-                .HasForeignKey(x => x.MandatoryConstraintId)
+                .HasForeignKey(f => f.AssignmentId)
                 .OnDelete(DeleteBehavior.Cascade);
-            e.HasOne<ParticipantAssignment>()
+            e.HasOne(f => f.FirstParticipantAssignment)
                 .WithMany()
-                .HasForeignKey(x => x.ParticipantAssignmentId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(f => f.FirstParticipantAssignmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(f => f.SecondParticipantAssignment)
+                .WithMany()
+                .HasForeignKey(f => f.SecondParticipantAssignmentId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // אילוץ סיווג לשיבוץ: על איזה מימד חל האילוץ (איזון או הפרדה).
         modelBuilder.Entity<AssignmentClassificationConstraint>(e =>
         {
-            e.HasKey(x => new { x.AssignmentId, x.ClassificationId });
+            e.HasKey(x => new { x.AssignmentId, x.ClassificationDimensionId });
             e.HasOne<Assignment>()
                 .WithMany()
                 .HasForeignKey(x => x.AssignmentId)
                 .OnDelete(DeleteBehavior.Cascade);
-            e.HasOne<Classification>()
+            e.HasOne<ClassificationDimension>()
                 .WithMany()
-                .HasForeignKey(x => x.ClassificationId)
+                .HasForeignKey(x => x.ClassificationDimensionId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 

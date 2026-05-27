@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyProject.Data;
@@ -11,28 +12,34 @@ using MyProject.Data;
 namespace MyProject.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260509232342_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260526204353_UnifyClassificationModel")]
+    partial class UnifyClassificationModel
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.11");
+            modelBuilder
+                .HasAnnotation("ProductVersion", "8.0.11")
+                .HasAnnotation("Relational:MaxIdentifierLength", 128);
+
+            SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("MyProject.Data.Models.Assignment", b =>
                 {
                     b.Property<int>("AssignmentId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AssignmentId"));
 
                     b.Property<string>("AssignmentName")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<int>("ManagementGroupId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("AssignmentId");
 
@@ -44,17 +51,17 @@ namespace MyProject.Data.Migrations
             modelBuilder.Entity("MyProject.Data.Models.AssignmentClassificationConstraint", b =>
                 {
                     b.Property<int>("AssignmentId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<int>("ClassificationId")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("ClassificationDimensionId")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsBalanceOrSeparation")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
-                    b.HasKey("AssignmentId", "ClassificationId");
+                    b.HasKey("AssignmentId", "ClassificationDimensionId");
 
-                    b.HasIndex("ClassificationId");
+                    b.HasIndex("ClassificationDimensionId");
 
                     b.ToTable("AssignmentClassificationConstraints");
                 });
@@ -63,30 +70,32 @@ namespace MyProject.Data.Migrations
                 {
                     b.Property<int>("AssignmentConflictId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("AssignmentConflictId"));
 
                     b.Property<int>("AssignmentId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<string>("ConflictType")
                         .IsRequired()
                         .HasMaxLength(128)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(128)");
 
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(2000)");
 
                     b.Property<string>("Severity")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(64)");
 
                     b.Property<string>("SystemRecommendation")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(2000)");
 
                     b.HasKey("AssignmentConflictId");
 
@@ -98,23 +107,23 @@ namespace MyProject.Data.Migrations
             modelBuilder.Entity("MyProject.Data.Models.AssignmentScoreBreakdown", b =>
                 {
                     b.Property<int>("AssignmentId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<double>("BalancePenalty")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double>("FinalSigma")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<double>("IsolationPenalty")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<string>("ScoreExplanation")
                         .HasMaxLength(4000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(4000)");
 
                     b.Property<double>("SocialScore")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.HasKey("AssignmentId");
 
@@ -125,72 +134,107 @@ namespace MyProject.Data.Migrations
                 {
                     b.Property<Guid>("RunId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<double>("BestScore")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<string>("SolutionStateBlob")
                         .IsRequired()
                         .HasMaxLength(8000)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("WasDiversified")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("bit");
 
                     b.HasKey("RunId");
 
                     b.ToTable("BestSolutionArchives");
                 });
 
-            modelBuilder.Entity("MyProject.Data.Models.Classification", b =>
+            modelBuilder.Entity("MyProject.Data.Models.ClassificationDimension", b =>
                 {
-                    b.Property<int>("ClassificationId")
+                    b.Property<int>("ClassificationDimensionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<string>("ClassificationName")
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClassificationDimensionId"));
+
+                    b.Property<string>("DimensionCode")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("ClassificationId");
+                    b.HasKey("ClassificationDimensionId");
 
-                    b.ToTable("Classifications");
-                });
-
-            modelBuilder.Entity("MyProject.Data.Models.ClassificationAttribute", b =>
-                {
-                    b.Property<int>("ClassificationAttributeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("AttributeName")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ClassificationId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("ClassificationAttributeId");
-
-                    b.HasIndex("ClassificationId", "AttributeName")
+                    b.HasIndex("DimensionCode")
                         .IsUnique();
 
-                    b.ToTable("ClassificationAttributes");
+                    b.ToTable("ClassificationDimensions");
+                });
+
+            modelBuilder.Entity("MyProject.Data.Models.ClassificationLevel", b =>
+                {
+                    b.Property<int>("ClassificationLevelId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClassificationLevelId"));
+
+                    b.Property<int>("ClassificationDimensionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LevelCode")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.HasKey("ClassificationLevelId");
+
+                    b.HasIndex("ClassificationDimensionId", "LevelCode")
+                        .IsUnique();
+
+                    b.ToTable("ClassificationLevels");
+                });
+
+            modelBuilder.Entity("MyProject.Data.Models.ForbiddenPairConstraint", b =>
+                {
+                    b.Property<int>("ForbiddenPairConstraintId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ForbiddenPairConstraintId"));
+
+                    b.Property<int>("AssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("FirstParticipantAssignmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SecondParticipantAssignmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ForbiddenPairConstraintId");
+
+                    b.HasIndex("AssignmentId");
+
+                    b.HasIndex("FirstParticipantAssignmentId");
+
+                    b.HasIndex("SecondParticipantAssignmentId");
+
+                    b.ToTable("ForbiddenPairConstraints");
                 });
 
             modelBuilder.Entity("MyProject.Data.Models.GroupCountConstraint", b =>
                 {
                     b.Property<int>("AssignmentId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("MaxGroups")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("MinGroups")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("AssignmentId");
 
@@ -200,16 +244,16 @@ namespace MyProject.Data.Migrations
             modelBuilder.Entity("MyProject.Data.Models.GroupSizeConstraint", b =>
                 {
                     b.Property<int>("AssignmentId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("GroupId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("MaxGroupSize")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("MinGroupSize")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("AssignmentId", "GroupId");
 
@@ -220,15 +264,17 @@ namespace MyProject.Data.Migrations
                 {
                     b.Property<int>("ManagementGroupId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ManagementGroupId"));
 
                     b.Property<string>("ManagementGroupName")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.Property<int>("ManagerId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("ManagementGroupId");
 
@@ -241,71 +287,64 @@ namespace MyProject.Data.Migrations
                 {
                     b.Property<int>("ManagerId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ManagerId"));
 
                     b.Property<string>("ManagerName")
                         .IsRequired()
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.HasKey("ManagerId");
 
                     b.ToTable("Managers");
                 });
 
-            modelBuilder.Entity("MyProject.Data.Models.MandatoryConstraint", b =>
+            modelBuilder.Entity("MyProject.Data.Models.MandatoryPairConstraint", b =>
                 {
-                    b.Property<int>("MandatoryConstraintId")
+                    b.Property<int>("MandatoryPairConstraintId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MandatoryPairConstraintId"));
 
                     b.Property<int>("AssignmentId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
-                    b.Property<string>("ConstraintName")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                    b.Property<int>("FirstParticipantAssignmentId")
+                        .HasColumnType("int");
 
-                    b.Property<bool>("IsMandatory")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("SecondParticipantAssignmentId")
+                        .HasColumnType("int");
 
-                    b.HasKey("MandatoryConstraintId");
+                    b.HasKey("MandatoryPairConstraintId");
 
                     b.HasIndex("AssignmentId");
 
-                    b.ToTable("MandatoryConstraints");
-                });
+                    b.HasIndex("FirstParticipantAssignmentId");
 
-            modelBuilder.Entity("MyProject.Data.Models.MandatoryConstraintAssignment", b =>
-                {
-                    b.Property<int>("MandatoryConstraintId")
-                        .HasColumnType("INTEGER");
+                    b.HasIndex("SecondParticipantAssignmentId");
 
-                    b.Property<int>("ParticipantAssignmentId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("MandatoryConstraintId", "ParticipantAssignmentId");
-
-                    b.HasIndex("ParticipantAssignmentId");
-
-                    b.ToTable("MandatoryConstraintAssignments");
+                    b.ToTable("MandatoryPairConstraints");
                 });
 
             modelBuilder.Entity("MyProject.Data.Models.Participant", b =>
                 {
                     b.Property<int>("ParticipantId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ParticipantId"));
 
                     b.Property<string>("IsraeliIdentityNumber")
                         .IsRequired()
                         .HasMaxLength(9)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(9)");
 
                     b.Property<string>("ParticipantName")
                         .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("nvarchar(256)");
 
                     b.HasKey("ParticipantId");
 
@@ -319,19 +358,21 @@ namespace MyProject.Data.Migrations
                 {
                     b.Property<int>("ParticipantAssignmentId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ParticipantAssignmentId"));
 
                     b.Property<int>("AssignmentId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<double>("BalanceContribution")
-                        .HasColumnType("REAL");
+                        .HasColumnType("float");
 
                     b.Property<int>("ManagerId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("ParticipantId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("ParticipantAssignmentId");
 
@@ -346,15 +387,20 @@ namespace MyProject.Data.Migrations
 
             modelBuilder.Entity("MyProject.Data.Models.ParticipantClassification", b =>
                 {
-                    b.Property<int>("ParticipantId")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("ParticipantAssignmentId")
+                        .HasColumnType("int");
 
-                    b.Property<int>("ClassificationAttributeId")
-                        .HasColumnType("INTEGER");
+                    b.Property<int>("ClassificationDimensionId")
+                        .HasColumnType("int");
 
-                    b.HasKey("ParticipantId", "ClassificationAttributeId");
+                    b.Property<int>("ClassificationLevelId")
+                        .HasColumnType("int");
 
-                    b.HasIndex("ClassificationAttributeId");
+                    b.HasKey("ParticipantAssignmentId", "ClassificationDimensionId");
+
+                    b.HasIndex("ClassificationDimensionId");
+
+                    b.HasIndex("ClassificationLevelId");
 
                     b.ToTable("ParticipantClassifications");
                 });
@@ -362,16 +408,16 @@ namespace MyProject.Data.Migrations
             modelBuilder.Entity("MyProject.Data.Models.SocialPreference", b =>
                 {
                     b.Property<int>("AssignmentId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("FromParticipantAssignmentId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("ToParticipantAssignmentId")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.Property<int>("PreferenceWeight")
-                        .HasColumnType("INTEGER");
+                        .HasColumnType("int");
 
                     b.HasKey("AssignmentId", "FromParticipantAssignmentId", "ToParticipantAssignmentId");
 
@@ -399,9 +445,9 @@ namespace MyProject.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MyProject.Data.Models.Classification", null)
+                    b.HasOne("MyProject.Data.Models.ClassificationDimension", null)
                         .WithMany()
-                        .HasForeignKey("ClassificationId")
+                        .HasForeignKey("ClassificationDimensionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -424,13 +470,40 @@ namespace MyProject.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("MyProject.Data.Models.ClassificationAttribute", b =>
+            modelBuilder.Entity("MyProject.Data.Models.ClassificationLevel", b =>
                 {
-                    b.HasOne("MyProject.Data.Models.Classification", null)
+                    b.HasOne("MyProject.Data.Models.ClassificationDimension", null)
                         .WithMany()
-                        .HasForeignKey("ClassificationId")
+                        .HasForeignKey("ClassificationDimensionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MyProject.Data.Models.ForbiddenPairConstraint", b =>
+                {
+                    b.HasOne("MyProject.Data.Models.Assignment", "Assignment")
+                        .WithMany()
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", "FirstParticipantAssignment")
+                        .WithMany()
+                        .HasForeignKey("FirstParticipantAssignmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", "SecondParticipantAssignment")
+                        .WithMany()
+                        .HasForeignKey("SecondParticipantAssignmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("FirstParticipantAssignment");
+
+                    b.Navigation("SecondParticipantAssignment");
                 });
 
             modelBuilder.Entity("MyProject.Data.Models.GroupCountConstraint", b =>
@@ -460,28 +533,31 @@ namespace MyProject.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("MyProject.Data.Models.MandatoryConstraint", b =>
+            modelBuilder.Entity("MyProject.Data.Models.MandatoryPairConstraint", b =>
                 {
-                    b.HasOne("MyProject.Data.Models.Assignment", null)
+                    b.HasOne("MyProject.Data.Models.Assignment", "Assignment")
                         .WithMany()
                         .HasForeignKey("AssignmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
 
-            modelBuilder.Entity("MyProject.Data.Models.MandatoryConstraintAssignment", b =>
-                {
-                    b.HasOne("MyProject.Data.Models.MandatoryConstraint", null)
+                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", "FirstParticipantAssignment")
                         .WithMany()
-                        .HasForeignKey("MandatoryConstraintId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("FirstParticipantAssignmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", null)
+                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", "SecondParticipantAssignment")
                         .WithMany()
-                        .HasForeignKey("ParticipantAssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("SecondParticipantAssignmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Assignment");
+
+                    b.Navigation("FirstParticipantAssignment");
+
+                    b.Navigation("SecondParticipantAssignment");
                 });
 
             modelBuilder.Entity("MyProject.Data.Models.ParticipantAssignment", b =>
@@ -507,15 +583,21 @@ namespace MyProject.Data.Migrations
 
             modelBuilder.Entity("MyProject.Data.Models.ParticipantClassification", b =>
                 {
-                    b.HasOne("MyProject.Data.Models.ClassificationAttribute", null)
+                    b.HasOne("MyProject.Data.Models.ClassificationDimension", null)
                         .WithMany()
-                        .HasForeignKey("ClassificationAttributeId")
+                        .HasForeignKey("ClassificationDimensionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MyProject.Data.Models.Participant", null)
+                    b.HasOne("MyProject.Data.Models.ClassificationLevel", null)
                         .WithMany()
-                        .HasForeignKey("ParticipantId")
+                        .HasForeignKey("ClassificationLevelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", null)
+                        .WithMany()
+                        .HasForeignKey("ParticipantAssignmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

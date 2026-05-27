@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using MyProject.Core.Domain.Enums;
 using MyProject.Core.Domain.ValueObjects;
 
 namespace MyProject.Core.Domain.Entities;
@@ -16,13 +15,11 @@ public sealed class Participant
     /// מאתחל מופע חדש של המחלקה <see cref="Participant"/>.
     /// </summary>
     /// <param name="id">מזהה המשתתף.</param>
-    /// <param name="classifications">רשימת סיווגי המשתתף.</param>
+    /// <param name="classifications">מיפוי מימד סיווג לרמת ערך (לפחות מימד אחד).</param>
     /// <param name="preferences">רשימת העדפות מדורגות של המשתתף.</param>
-    /// <exception cref="ArgumentNullException">נזרק כאשר <paramref name="classifications"/> או <paramref name="preferences"/> הוא null.</exception>
-    /// <exception cref="ArgumentException">נזרק כאשר מצב המשתתף אינו חוקי.</exception>
     public Participant(
         ParticipantId id,
-        IEnumerable<ClassificationType> classifications,
+        IReadOnlyDictionary<ClassificationDimensionCode, ClassificationLevelCode> classifications,
         IEnumerable<Preference> preferences)
     {
         if (classifications is null)
@@ -35,23 +32,23 @@ public sealed class Participant
             throw new ArgumentNullException(nameof(preferences));
         }
 
-        var classificationsList = classifications.ToList();
+        if (classifications.Count == 0)
+        {
+            throw new ArgumentException("Participant must have at least one classification dimension.", nameof(classifications));
+        }
+
+        var classificationsCopy = new Dictionary<ClassificationDimensionCode, ClassificationLevelCode>(classifications.Count);
+        foreach (var (dimension, level) in classifications)
+        {
+            if (classificationsCopy.ContainsKey(dimension))
+            {
+                throw new ArgumentException("Participant classifications cannot contain duplicate dimensions.", nameof(classifications));
+            }
+
+            classificationsCopy[dimension] = level;
+        }
+
         var preferencesList = preferences.ToList();
-
-        if (classificationsList.Count == 0)
-        {
-            throw new ArgumentException("Participant must have at least one classification.", nameof(classifications));
-        }
-
-        if (classificationsList.Any(c => c == ClassificationType.Unspecified))
-        {
-            throw new ArgumentException("Participant classifications cannot include Unspecified.", nameof(classifications));
-        }
-
-        if (classificationsList.Distinct().Count() != classificationsList.Count)
-        {
-            throw new ArgumentException("Participant classifications cannot contain duplicates.", nameof(classifications));
-        }
 
         if (preferencesList.Any(p => p is null))
         {
@@ -74,7 +71,7 @@ public sealed class Participant
         }
 
         Id = id;
-        Classifications = new ReadOnlyCollection<ClassificationType>(classificationsList);
+        Classifications = new ReadOnlyDictionary<ClassificationDimensionCode, ClassificationLevelCode>(classificationsCopy);
         Preferences = new ReadOnlyCollection<Preference>(preferencesList);
     }
 
@@ -84,9 +81,10 @@ public sealed class Participant
     public ParticipantId Id { get; }
 
     /// <summary>
-    /// מחזיר את סיווגי המשתתף.
+    /// סיווגי המשתתף: מפתח = מימד (למשל "רמה"), ערך = רמה בתוך המימד (למשל "מתחיל").
     /// </summary>
-    public IReadOnlyList<ClassificationType> Classifications { get; }
+    /// <remarks>נבנה מ־Data דרך <c>ParticipantMapper</c> לפי שורות <c>ParticipantClassification</c> של אותה ריצת שיבוץ.</remarks>
+    public IReadOnlyDictionary<ClassificationDimensionCode, ClassificationLevelCode> Classifications { get; }
 
     /// <summary>
     /// מחזיר את רשימת ההעדפות המדורגות של המשתתף.

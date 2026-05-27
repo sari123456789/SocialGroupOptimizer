@@ -9,10 +9,10 @@ namespace MyProject.Data;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// מוסיף את <see cref="ApplicationDbContext"/> עם ספק SQLite.
+    /// מוסיף את <see cref="ApplicationDbContext"/> עם ספק SQL Server.
     /// </summary>
     /// <param name="services">אוסף השירותים.</param>
-    /// <param name="connectionString">מחרוזת חיבור ל־SQLite.</param>
+    /// <param name="connectionString">מחרוזת חיבור ל־SQL Server.</param>
     public static IServiceCollection AddApplicationPersistence(this IServiceCollection services, string connectionString)
     {
         if (string.IsNullOrWhiteSpace(connectionString))
@@ -21,7 +21,7 @@ public static class ServiceCollectionExtensions
         }
 
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlite(connectionString));
+            options.UseSqlServer(connectionString));
 
         return services;
     }

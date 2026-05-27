@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MyProject.Core.Domain.Enums;
 using MyProject.Core.Domain.ValueObjects;
 using MyProject.Data.Models;
 using CoreParticipant = MyProject.Core.Domain.Entities.Participant;
@@ -11,27 +10,21 @@ using DataParticipant = MyProject.Data.Models.Participant;
 namespace MyProject.Data.Mapping;
 
 /// <summary>
-/// מיפוי מפורש משורות נתונים לישויות ליבה של משתתף.
+/// מיפוי משורות מסד לישות <see cref="CoreParticipant"/> בליבה.
 /// </summary>
+/// <remarks>
+/// שרשרת סיווג: Participant (מסד) → ParticipantAssignment (שיבוץ) → ParticipantClassification → מילון מימד→רמה.
+/// מספר זהות: IsraeliIdentityNumber → ParticipantId בליבה (לא מפתח ParticipantId במסד).
+/// </remarks>
 public static class ParticipantMapper
 {
     /// <summary>
-    /// ממפה משתתף משורות נתונים למשתתף בשכבת הליבה.
+    /// בונה משתתף ליבה אחד לריצת שיבוץ: זהות, סיווגים (מילון), העדפות מדורגות.
     /// </summary>
-    /// <param name="participant">שורת משתתף.</param>
-    /// <param name="participantClassifications">שורות סיווג משתתף.</param>
-    /// <param name="classificationAttributes">מאפייני סיווג לצורך המרת שם למבנה הליבה.</param>
-    /// <param name="socialPreferences">העדפות חברתיות הקשורות לאותה ריצת שיבוץ.</param>
-    /// <param name="context">הקשר הממפה בין שיבוץ משתתף למזהה משתתף (מפתח מספרי בשכבת הנתונים).</param>
-    /// <param name="participantIdentityByDbParticipantId">מיפוי ממפתח משתתף מספרי במסד למזהה ליבה (מספר זהות).</param>
-    /// <param name="assignmentDbId">מזהה שיבוץ פנימי במסד לצורך סינון העדפות.</param>
-    /// <returns>משתתף בשכבת הליבה.</returns>
-    /// <exception cref="ArgumentNullException">נזרק כאשר אחד מהפרמטרים הנדרשים הוא null.</exception>
-    /// <exception cref="InvalidOperationException">נזרק כאשר הנתונים אינם ניתנים למיפוי חד משמעי.</exception>
     public static CoreParticipant MapToCoreParticipant(
         DataParticipant participant,
         IEnumerable<ParticipantClassification> participantClassifications,
-        IEnumerable<ClassificationAttribute> classificationAttributes,
+        ClassificationCatalog catalog,
         IEnumerable<SocialPreference> socialPreferences,
         ParticipantAssignmentContext context,
         IReadOnlyDictionary<int, ParticipantId> participantIdentityByDbParticipantId,
@@ -47,9 +40,9 @@ public static class ParticipantMapper
             throw new ArgumentNullException(nameof(participantClassifications));
         }
 
-        if (classificationAttributes is null)
+        if (catalog is null)
         {
-            throw new ArgumentNullException(nameof(classificationAttributes));
+            throw new ArgumentNullException(nameof(catalog));
         }
 
         if (socialPreferences is null)
@@ -78,17 +71,19 @@ public static class ParticipantMapper
             throw new InvalidOperationException($"Missing domain participant identity for DbParticipantId {dbParticipantId}.");
         }
 
-        var attributeById = classificationAttributes.ToDictionary(a => a.ClassificationAttributeId);
-        var classifications = new List<ClassificationType>();
+        // אותו אדם יכול להופיע בכמה שיבוצים — סיווגים נלקחים רק מהשורה של השיבוץ הנוכחי.
+        var participantAssignmentId = context.GetParticipantAssignmentId(dbParticipantId, assignmentDbId);
+        var classifications = new Dictionary<ClassificationDimensionCode, ClassificationLevelCode>();
 
-        foreach (var row in participantClassifications.Where(c => c.ParticipantId == dbParticipantId))
+        foreach (var row in participantClassifications.Where(c => c.ParticipantAssignmentId == participantAssignmentId))
         {
-            if (!attributeById.TryGetValue(row.ClassificationAttributeId, out var attribute))
+            // כל שורה = מימד אחד + רמה אחת; TryAdd נכשל אם יש שתי שורות לאותו מימד.
+            var (dimension, level) = catalog.ResolveParticipantClassification(row);
+            if (!classifications.TryAdd(dimension, level))
             {
-                throw new InvalidOperationException($"Missing ClassificationAttribute for id {row.ClassificationAttributeId}.");
+                throw new InvalidOperationException(
+                    $"Duplicate classification dimension '{dimension}' for ParticipantAssignmentId {participantAssignmentId}.");
             }
-
-            classifications.Add(MapClassificationAttributeNameToCore(attribute.AttributeName));
         }
 
         if (classifications.Count == 0)
@@ -107,9 +102,8 @@ public static class ParticipantMapper
     }
 
     /// <summary>
-    /// בונה מילון מזהי משתתף מספריים (שכבת נתונים) ל-<see cref="ParticipantId"/> לאחר אימות מספר הזהות.
+    /// מילון: מפתח משתתף במסד (int) → מספר זהות בליבה. נדרש לפני כל מיפוי זוגות/העדפות/סיווגים.
     /// </summary>
-    /// <param name="participants">כל משתתפי הריצה או המערכת הדרושים לפתרון מזהים.</param>
     public static IReadOnlyDictionary<int, ParticipantId> CreateParticipantIdentityLookup(IEnumerable<DataParticipant> participants)
     {
         if (participants is null)
@@ -170,10 +164,12 @@ public static class ParticipantMapper
             {
                 throw new InvalidOperationException($"Missing domain participant identity for DbParticipantId {toDbParticipantId}.");
             }
+
             if (preferredParticipantId == selfId)
             {
                 throw new InvalidOperationException("SocialPreference cannot target the same participant as the source.");
             }
+
             if (!preferredIds.Add(preferredParticipantId))
             {
                 throw new InvalidOperationException("Duplicate preferred participant in social preferences for the same source.");
@@ -184,26 +180,5 @@ public static class ParticipantMapper
         }
 
         return preferences;
-    }
-
-    private static ClassificationType MapClassificationAttributeNameToCore(string attributeName)
-    {
-        if (string.IsNullOrWhiteSpace(attributeName))
-        {
-            throw new InvalidOperationException("Classification attribute name cannot be empty.");
-        }
-
-        // מיפוי מבוסס שם בדיוק כמו שם הערך ב enum של הליבה.
-        if (!Enum.TryParse<ClassificationType>(attributeName, ignoreCase: true, out var parsed))
-        {
-            throw new InvalidOperationException($"Unknown classification attribute mapping for '{attributeName}'.");
-        }
-
-        if (parsed == ClassificationType.Unspecified)
-        {
-            throw new InvalidOperationException("Mapped classification cannot be Unspecified.");
-        }
-
-        return parsed;
     }
 }

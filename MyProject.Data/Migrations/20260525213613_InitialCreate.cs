@@ -15,10 +15,10 @@ namespace MyProject.Data.Migrations
                 name: "BestSolutionArchives",
                 columns: table => new
                 {
-                    RunId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    BestScore = table.Column<double>(type: "REAL", nullable: false),
-                    SolutionStateBlob = table.Column<string>(type: "TEXT", maxLength: 8000, nullable: false),
-                    WasDiversified = table.Column<bool>(type: "INTEGER", nullable: false)
+                    RunId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BestScore = table.Column<double>(type: "float", nullable: false),
+                    SolutionStateBlob = table.Column<string>(type: "nvarchar(max)", maxLength: 8000, nullable: false),
+                    WasDiversified = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -29,9 +29,9 @@ namespace MyProject.Data.Migrations
                 name: "Classifications",
                 columns: table => new
                 {
-                    ClassificationId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ClassificationName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false)
+                    ClassificationId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ClassificationName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -42,9 +42,9 @@ namespace MyProject.Data.Migrations
                 name: "Managers",
                 columns: table => new
                 {
-                    ManagerId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ManagerName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false)
+                    ManagerId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ManagerName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -55,10 +55,10 @@ namespace MyProject.Data.Migrations
                 name: "Participants",
                 columns: table => new
                 {
-                    ParticipantId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    IsraeliIdentityNumber = table.Column<string>(type: "TEXT", maxLength: 9, nullable: false),
-                    ParticipantName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true)
+                    ParticipantId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IsraeliIdentityNumber = table.Column<string>(type: "nvarchar(9)", maxLength: 9, nullable: false),
+                    ParticipantName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -69,10 +69,10 @@ namespace MyProject.Data.Migrations
                 name: "ClassificationAttributes",
                 columns: table => new
                 {
-                    ClassificationAttributeId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ClassificationId = table.Column<int>(type: "INTEGER", nullable: false),
-                    AttributeName = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false)
+                    ClassificationAttributeId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ClassificationId = table.Column<int>(type: "int", nullable: false),
+                    AttributeName = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -89,10 +89,10 @@ namespace MyProject.Data.Migrations
                 name: "ManagementGroups",
                 columns: table => new
                 {
-                    ManagementGroupId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ManagerId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ManagementGroupName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false)
+                    ManagementGroupId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ManagerId = table.Column<int>(type: "int", nullable: false),
+                    ManagementGroupName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -109,8 +109,8 @@ namespace MyProject.Data.Migrations
                 name: "ParticipantClassifications",
                 columns: table => new
                 {
-                    ParticipantId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ClassificationAttributeId = table.Column<int>(type: "INTEGER", nullable: false)
+                    ParticipantId = table.Column<int>(type: "int", nullable: false),
+                    ClassificationAttributeId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -133,10 +133,10 @@ namespace MyProject.Data.Migrations
                 name: "Assignments",
                 columns: table => new
                 {
-                    AssignmentId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    AssignmentName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false),
-                    ManagementGroupId = table.Column<int>(type: "INTEGER", nullable: false)
+                    AssignmentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AssignmentName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    ManagementGroupId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -153,9 +153,9 @@ namespace MyProject.Data.Migrations
                 name: "AssignmentClassificationConstraints",
                 columns: table => new
                 {
-                    AssignmentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ClassificationId = table.Column<int>(type: "INTEGER", nullable: false),
-                    IsBalanceOrSeparation = table.Column<bool>(type: "INTEGER", nullable: false)
+                    AssignmentId = table.Column<int>(type: "int", nullable: false),
+                    ClassificationId = table.Column<int>(type: "int", nullable: false),
+                    IsBalanceOrSeparation = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -178,13 +178,13 @@ namespace MyProject.Data.Migrations
                 name: "AssignmentConflicts",
                 columns: table => new
                 {
-                    AssignmentConflictId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    AssignmentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ConflictType = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
-                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
-                    Severity = table.Column<string>(type: "TEXT", maxLength: 64, nullable: false),
-                    SystemRecommendation = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false)
+                    AssignmentConflictId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AssignmentId = table.Column<int>(type: "int", nullable: false),
+                    ConflictType = table.Column<string>(type: "nvarchar(128)", maxLength: 128, nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    Severity = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
+                    SystemRecommendation = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -201,12 +201,12 @@ namespace MyProject.Data.Migrations
                 name: "AssignmentScoreBreakdowns",
                 columns: table => new
                 {
-                    AssignmentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    SocialScore = table.Column<double>(type: "REAL", nullable: false),
-                    BalancePenalty = table.Column<double>(type: "REAL", nullable: false),
-                    IsolationPenalty = table.Column<double>(type: "REAL", nullable: false),
-                    FinalSigma = table.Column<double>(type: "REAL", nullable: false),
-                    ScoreExplanation = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: true)
+                    AssignmentId = table.Column<int>(type: "int", nullable: false),
+                    SocialScore = table.Column<double>(type: "float", nullable: false),
+                    BalancePenalty = table.Column<double>(type: "float", nullable: false),
+                    IsolationPenalty = table.Column<double>(type: "float", nullable: false),
+                    FinalSigma = table.Column<double>(type: "float", nullable: false),
+                    ScoreExplanation = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -223,9 +223,9 @@ namespace MyProject.Data.Migrations
                 name: "GroupCountConstraints",
                 columns: table => new
                 {
-                    AssignmentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    MinGroups = table.Column<int>(type: "INTEGER", nullable: false),
-                    MaxGroups = table.Column<int>(type: "INTEGER", nullable: false)
+                    AssignmentId = table.Column<int>(type: "int", nullable: false),
+                    MinGroups = table.Column<int>(type: "int", nullable: false),
+                    MaxGroups = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -242,10 +242,10 @@ namespace MyProject.Data.Migrations
                 name: "GroupSizeConstraints",
                 columns: table => new
                 {
-                    GroupId = table.Column<int>(type: "INTEGER", nullable: false),
-                    AssignmentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    MinGroupSize = table.Column<int>(type: "INTEGER", nullable: false),
-                    MaxGroupSize = table.Column<int>(type: "INTEGER", nullable: false)
+                    GroupId = table.Column<int>(type: "int", nullable: false),
+                    AssignmentId = table.Column<int>(type: "int", nullable: false),
+                    MinGroupSize = table.Column<int>(type: "int", nullable: false),
+                    MaxGroupSize = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -262,11 +262,11 @@ namespace MyProject.Data.Migrations
                 name: "MandatoryConstraints",
                 columns: table => new
                 {
-                    MandatoryConstraintId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    AssignmentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ConstraintName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false),
-                    IsMandatory = table.Column<bool>(type: "INTEGER", nullable: false)
+                    MandatoryConstraintId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AssignmentId = table.Column<int>(type: "int", nullable: false),
+                    ConstraintName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    IsMandatory = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -283,12 +283,12 @@ namespace MyProject.Data.Migrations
                 name: "ParticipantAssignments",
                 columns: table => new
                 {
-                    ParticipantAssignmentId = table.Column<int>(type: "INTEGER", nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    ParticipantId = table.Column<int>(type: "INTEGER", nullable: false),
-                    AssignmentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ManagerId = table.Column<int>(type: "INTEGER", nullable: false),
-                    BalanceContribution = table.Column<double>(type: "REAL", nullable: false)
+                    ParticipantAssignmentId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ParticipantId = table.Column<int>(type: "int", nullable: false),
+                    AssignmentId = table.Column<int>(type: "int", nullable: false),
+                    ManagerId = table.Column<int>(type: "int", nullable: false),
+                    BalanceContribution = table.Column<double>(type: "float", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -317,8 +317,8 @@ namespace MyProject.Data.Migrations
                 name: "MandatoryConstraintAssignments",
                 columns: table => new
                 {
-                    MandatoryConstraintId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ParticipantAssignmentId = table.Column<int>(type: "INTEGER", nullable: false)
+                    MandatoryConstraintId = table.Column<int>(type: "int", nullable: false),
+                    ParticipantAssignmentId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -334,17 +334,17 @@ namespace MyProject.Data.Migrations
                         column: x => x.ParticipantAssignmentId,
                         principalTable: "ParticipantAssignments",
                         principalColumn: "ParticipantAssignmentId",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
                 name: "SocialPreferences",
                 columns: table => new
                 {
-                    FromParticipantAssignmentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    ToParticipantAssignmentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    AssignmentId = table.Column<int>(type: "INTEGER", nullable: false),
-                    PreferenceWeight = table.Column<int>(type: "INTEGER", nullable: false)
+                    FromParticipantAssignmentId = table.Column<int>(type: "int", nullable: false),
+                    ToParticipantAssignmentId = table.Column<int>(type: "int", nullable: false),
+                    AssignmentId = table.Column<int>(type: "int", nullable: false),
+                    PreferenceWeight = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {

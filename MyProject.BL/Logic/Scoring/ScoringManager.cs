@@ -9,14 +9,7 @@ namespace MyProject.BL.Logic.Scoring;
 /// <summary>
 /// מנוע הניקוד: מתאם את רכיבי הניקוד ומייצר ציון הקצאה סופי.
 /// </summary>
-/// <remarks>
-/// הערה ארכיטקטונית:
-/// <see cref="Core.Domain.Services.IScoreCalculator"/> מקבל רק <see cref="Assignment"/> ורשימת אילוצים.
-/// מאחר שחישוב ניקוד חברתי מצריך גם את נתוני המשתתפים (העדפות),
-/// <see cref="ScoringManager"/> חושף חתימה נרחבת יותר.
-/// ראה שאלות פתוחות בדוח השלב.
-/// </remarks>
-public sealed class ScoringManager
+public sealed class ScoringManager : IAssignmentScorer
 {
     private readonly SocialConnectionScorer _socialConnectionScorer;
     private readonly IsolationPenaltyEvaluator _isolationPenaltyEvaluator;

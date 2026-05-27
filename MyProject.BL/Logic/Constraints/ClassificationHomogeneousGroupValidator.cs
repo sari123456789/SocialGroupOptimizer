@@ -10,9 +10,6 @@ namespace MyProject.BL.Logic.Constraints;
 /// </summary>
 public sealed class ClassificationHomogeneousGroupValidator
 {
-    /// <summary>
-    /// בודק את כל אילוצי ההומוגניות ומחזיר הודעות שגיאה עבור הפרות.
-    /// </summary>
     public IReadOnlyList<string> Validate(
         Assignment assignment,
         IReadOnlyList<ClassificationHomogeneousGroupConstraint> constraints)
@@ -26,10 +23,10 @@ public sealed class ClassificationHomogeneousGroupValidator
                 continue;
             }
 
-            var levels = string.Join(", ", constraint.DimensionLevels.OrderBy(x => (int)x));
+            var levels = string.Join(", ", constraint.DimensionLevels.OrderBy(x => x.Value));
             errors.Add(
-                $"ClassificationHomogeneousGroup violated for dimension levels [{levels}]: " +
-                $"each group must contain participants of at most one level, and each participant must map to exactly one of these levels.");
+                $"ClassificationHomogeneousGroup violated for dimension '{constraint.TargetDimension}' levels [{levels}]: " +
+                $"each group must contain participants of at most one level, and each participant must have exactly one allowed level in this dimension.");
         }
 
         return errors;

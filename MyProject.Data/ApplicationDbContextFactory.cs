@@ -11,7 +11,7 @@ public sealed class ApplicationDbContextFactory : IDesignTimeDbContextFactory<Ap
     public ApplicationDbContext CreateDbContext(string[] args)
     {
         var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-        optionsBuilder.UseSqlite("Data Source=myproject_dev.db");
+        optionsBuilder.UseSqlServer("Server=.\\SQLEXPRESS;Database=MyProjectDb_Dev;Trusted_Connection=True;TrustServerCertificate=True;");
         return new ApplicationDbContext(optionsBuilder.Options);
     }
 }

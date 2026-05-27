@@ -1,4 +1,4 @@
-﻿namespace MyProject.Data.Models;
+namespace MyProject.Data.Models;
 
 /// <summary>
 /// שורת שיבוץ משתתף לריצת שיבוץ מסוימת. מזהי <see cref="FromParticipantAssignmentId"/> / <see cref="ToParticipantAssignmentId"/> בהעדפות חברתיות מתייחסים ל־<see cref="ParticipantAssignmentId"/>.
@@ -16,3 +16,4 @@ public class ParticipantAssignment
     /// <summary>תרומת המשתתף לאיזון הקבוצה (חיובי/שלילי).</summary>
     public double BalanceContribution { get; set; }
 }
+    

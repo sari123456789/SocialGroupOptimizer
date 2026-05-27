@@ -6,18 +6,21 @@ using MyProject.Data.Models;
 namespace MyProject.Data.Mapping;
 
 /// <summary>
-/// הקשר זיהוי לשורות שיבוץ משתתף בריצת שיבוץ מסוימת.
+/// גשר בין מזהי מסד של "משתתף בשיבוץ" לבין משתתף (מפתח מסד) וריצת שיבוץ.
 /// </summary>
+/// <remarks>
+/// <para>במסד, העדפות וסיווגים מצביעים על <c>ParticipantAssignmentId</c>, לא על מספר זהות.</para>
+/// <para>בליבה, האלגוריתם עובד עם <c>ParticipantId</c> (מספר זהות) — לכן צריך תרגום דו־כיווני.</para>
+/// <para>נבנה מכל שורות <c>ParticipantAssignments</c> של אותה ריצת שיבוץ.</para>
+/// </remarks>
 public sealed class ParticipantAssignmentContext
 {
+    // ParticipantAssignmentId → ParticipantId (מפתח מסד של אדם)
     private readonly IReadOnlyDictionary<int, int> _dbParticipantIdByParticipantAssignmentId;
 
-    /// <summary>
-    /// מאתחל הקשר מתוך רשימת שורות שיבוץ משתתף.
-    /// </summary>
-    /// <param name="participantAssignments">שורות שיבוץ משתתף.</param>
-    /// <exception cref="ArgumentNullException">נזרק כאשר <paramref name="participantAssignments"/> הוא null.</exception>
-    /// <exception cref="InvalidOperationException">נזרק כאשר יש כפילות במפתחות או מזהה לא חוקי.</exception>
+    // (ParticipantId במסד, AssignmentId) → ParticipantAssignmentId
+    private readonly IReadOnlyDictionary<(int DbParticipantId, int AssignmentId), int> _participantAssignmentIdByParticipantAndAssignment;
+
     public ParticipantAssignmentContext(IEnumerable<ParticipantAssignment> participantAssignments)
     {
         if (participantAssignments is null)
@@ -41,17 +44,21 @@ public sealed class ParticipantAssignmentContext
             throw new InvalidOperationException("ParticipantId must be greater than zero for all participant assignments.");
         }
 
+        if (rows.Any(r => r.AssignmentId <= 0))
+        {
+            throw new InvalidOperationException("AssignmentId must be greater than zero for all participant assignments.");
+        }
+
         _dbParticipantIdByParticipantAssignmentId = rows.ToDictionary(
             r => r.ParticipantAssignmentId,
             r => r.ParticipantId);
+
+        _participantAssignmentIdByParticipantAndAssignment = rows.ToDictionary(
+            r => (r.ParticipantId, r.AssignmentId),
+            r => r.ParticipantAssignmentId);
     }
 
-    /// <summary>
-    /// מחזיר את מזהה המשתתף הפנימי במסד לפי מזהה שיבוץ משתתף.
-    /// </summary>
-    /// <param name="participantAssignmentId">מזהה שיבוץ משתתף.</param>
-    /// <returns>מזהה משתתף פנימי במסד.</returns>
-    /// <exception cref="InvalidOperationException">נזרק כאשר המזהה לא קיים בהקשר.</exception>
+    /// <summary>מזהה שיבוץ משתתף → מפתח משתתף פנימי במסד (לא מספר זהות).</summary>
     public int GetDbParticipantId(int participantAssignmentId)
     {
         if (!_dbParticipantIdByParticipantAssignmentId.TryGetValue(participantAssignmentId, out var dbParticipantId))
@@ -60,5 +67,17 @@ public sealed class ParticipantAssignmentContext
         }
 
         return dbParticipantId;
+    }
+
+    /// <summary>מפתח משתתף במסד + מזהה שיבוץ → שורת ParticipantAssignment (לסינון סיווגים והעדפות).</summary>
+    public int GetParticipantAssignmentId(int dbParticipantId, int assignmentDbId)
+    {
+        if (!_participantAssignmentIdByParticipantAndAssignment.TryGetValue((dbParticipantId, assignmentDbId), out var participantAssignmentId))
+        {
+            throw new InvalidOperationException(
+                $"No ParticipantAssignment for DbParticipantId {dbParticipantId} in AssignmentId {assignmentDbId}.");
+        }
+
+        return participantAssignmentId;
     }
 }

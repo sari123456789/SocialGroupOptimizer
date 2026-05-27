@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MyProject.Data;
 
@@ -11,9 +12,11 @@ using MyProject.Data;
 namespace MyProject.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260525213613_InitialCreate")]
+    partial class InitialCreate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,15 +53,15 @@ namespace MyProject.Data.Migrations
                     b.Property<int>("AssignmentId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ClassificationDimensionId")
+                    b.Property<int>("ClassificationId")
                         .HasColumnType("int");
 
                     b.Property<bool>("IsBalanceOrSeparation")
                         .HasColumnType("bit");
 
-                    b.HasKey("AssignmentId", "ClassificationDimensionId");
+                    b.HasKey("AssignmentId", "ClassificationId");
 
-                    b.HasIndex("ClassificationDimensionId");
+                    b.HasIndex("ClassificationId");
 
                     b.ToTable("AssignmentClassificationConstraints");
                 });
@@ -149,77 +152,46 @@ namespace MyProject.Data.Migrations
                     b.ToTable("BestSolutionArchives");
                 });
 
-            modelBuilder.Entity("MyProject.Data.Models.ClassificationDimension", b =>
+            modelBuilder.Entity("MyProject.Data.Models.Classification", b =>
                 {
-                    b.Property<int>("ClassificationDimensionId")
+                    b.Property<int>("ClassificationId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClassificationDimensionId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClassificationId"));
 
-                    b.Property<string>("DimensionCode")
+                    b.Property<string>("ClassificationName")
                         .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
-                    b.HasKey("ClassificationDimensionId");
+                    b.HasKey("ClassificationId");
 
-                    b.HasIndex("DimensionCode")
-                        .IsUnique();
-
-                    b.ToTable("ClassificationDimensions");
+                    b.ToTable("Classifications");
                 });
 
-            modelBuilder.Entity("MyProject.Data.Models.ClassificationLevel", b =>
+            modelBuilder.Entity("MyProject.Data.Models.ClassificationAttribute", b =>
                 {
-                    b.Property<int>("ClassificationLevelId")
+                    b.Property<int>("ClassificationAttributeId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClassificationLevelId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ClassificationAttributeId"));
 
-                    b.Property<int>("ClassificationDimensionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("LevelCode")
+                    b.Property<string>("AttributeName")
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
-                    b.HasKey("ClassificationLevelId");
+                    b.Property<int>("ClassificationId")
+                        .HasColumnType("int");
 
-                    b.HasIndex("ClassificationDimensionId", "LevelCode")
+                    b.HasKey("ClassificationAttributeId");
+
+                    b.HasIndex("ClassificationId", "AttributeName")
                         .IsUnique();
 
-                    b.ToTable("ClassificationLevels");
-                });
-
-            modelBuilder.Entity("MyProject.Data.Models.ForbiddenPairConstraint", b =>
-                {
-                    b.Property<int>("ForbiddenPairConstraintId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ForbiddenPairConstraintId"));
-
-                    b.Property<int>("AssignmentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("FirstParticipantAssignmentId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SecondParticipantAssignmentId")
-                        .HasColumnType("int");
-
-                    b.HasKey("ForbiddenPairConstraintId");
-
-                    b.HasIndex("AssignmentId");
-
-                    b.HasIndex("FirstParticipantAssignmentId");
-
-                    b.HasIndex("SecondParticipantAssignmentId");
-
-                    b.ToTable("ForbiddenPairConstraints");
+                    b.ToTable("ClassificationAttributes");
                 });
 
             modelBuilder.Entity("MyProject.Data.Models.GroupCountConstraint", b =>
@@ -298,32 +270,45 @@ namespace MyProject.Data.Migrations
                     b.ToTable("Managers");
                 });
 
-            modelBuilder.Entity("MyProject.Data.Models.MandatoryPairConstraint", b =>
+            modelBuilder.Entity("MyProject.Data.Models.MandatoryConstraint", b =>
                 {
-                    b.Property<int>("MandatoryPairConstraintId")
+                    b.Property<int>("MandatoryConstraintId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MandatoryPairConstraintId"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("MandatoryConstraintId"));
 
                     b.Property<int>("AssignmentId")
                         .HasColumnType("int");
 
-                    b.Property<int>("FirstParticipantAssignmentId")
-                        .HasColumnType("int");
+                    b.Property<string>("ConstraintName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
 
-                    b.Property<int>("SecondParticipantAssignmentId")
-                        .HasColumnType("int");
+                    b.Property<bool>("IsMandatory")
+                        .HasColumnType("bit");
 
-                    b.HasKey("MandatoryPairConstraintId");
+                    b.HasKey("MandatoryConstraintId");
 
                     b.HasIndex("AssignmentId");
 
-                    b.HasIndex("FirstParticipantAssignmentId");
+                    b.ToTable("MandatoryConstraints");
+                });
 
-                    b.HasIndex("SecondParticipantAssignmentId");
+            modelBuilder.Entity("MyProject.Data.Models.MandatoryConstraintAssignment", b =>
+                {
+                    b.Property<int>("MandatoryConstraintId")
+                        .HasColumnType("int");
 
-                    b.ToTable("MandatoryPairConstraints");
+                    b.Property<int>("ParticipantAssignmentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("MandatoryConstraintId", "ParticipantAssignmentId");
+
+                    b.HasIndex("ParticipantAssignmentId");
+
+                    b.ToTable("MandatoryConstraintAssignments");
                 });
 
             modelBuilder.Entity("MyProject.Data.Models.Participant", b =>
@@ -384,20 +369,15 @@ namespace MyProject.Data.Migrations
 
             modelBuilder.Entity("MyProject.Data.Models.ParticipantClassification", b =>
                 {
-                    b.Property<int>("ParticipantAssignmentId")
+                    b.Property<int>("ParticipantId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ClassificationDimensionId")
+                    b.Property<int>("ClassificationAttributeId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ClassificationLevelId")
-                        .HasColumnType("int");
+                    b.HasKey("ParticipantId", "ClassificationAttributeId");
 
-                    b.HasKey("ParticipantAssignmentId", "ClassificationDimensionId");
-
-                    b.HasIndex("ClassificationDimensionId");
-
-                    b.HasIndex("ClassificationLevelId");
+                    b.HasIndex("ClassificationAttributeId");
 
                     b.ToTable("ParticipantClassifications");
                 });
@@ -442,9 +422,9 @@ namespace MyProject.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MyProject.Data.Models.ClassificationDimension", null)
+                    b.HasOne("MyProject.Data.Models.Classification", null)
                         .WithMany()
-                        .HasForeignKey("ClassificationDimensionId")
+                        .HasForeignKey("ClassificationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -467,40 +447,13 @@ namespace MyProject.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("MyProject.Data.Models.ClassificationLevel", b =>
+            modelBuilder.Entity("MyProject.Data.Models.ClassificationAttribute", b =>
                 {
-                    b.HasOne("MyProject.Data.Models.ClassificationDimension", null)
+                    b.HasOne("MyProject.Data.Models.Classification", null)
                         .WithMany()
-                        .HasForeignKey("ClassificationDimensionId")
+                        .HasForeignKey("ClassificationId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("MyProject.Data.Models.ForbiddenPairConstraint", b =>
-                {
-                    b.HasOne("MyProject.Data.Models.Assignment", "Assignment")
-                        .WithMany()
-                        .HasForeignKey("AssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", "FirstParticipantAssignment")
-                        .WithMany()
-                        .HasForeignKey("FirstParticipantAssignmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", "SecondParticipantAssignment")
-                        .WithMany()
-                        .HasForeignKey("SecondParticipantAssignmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Assignment");
-
-                    b.Navigation("FirstParticipantAssignment");
-
-                    b.Navigation("SecondParticipantAssignment");
                 });
 
             modelBuilder.Entity("MyProject.Data.Models.GroupCountConstraint", b =>
@@ -530,31 +483,28 @@ namespace MyProject.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("MyProject.Data.Models.MandatoryPairConstraint", b =>
+            modelBuilder.Entity("MyProject.Data.Models.MandatoryConstraint", b =>
                 {
-                    b.HasOne("MyProject.Data.Models.Assignment", "Assignment")
+                    b.HasOne("MyProject.Data.Models.Assignment", null)
                         .WithMany()
                         .HasForeignKey("AssignmentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
 
-                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", "FirstParticipantAssignment")
+            modelBuilder.Entity("MyProject.Data.Models.MandatoryConstraintAssignment", b =>
+                {
+                    b.HasOne("MyProject.Data.Models.MandatoryConstraint", null)
                         .WithMany()
-                        .HasForeignKey("FirstParticipantAssignmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasForeignKey("MandatoryConstraintId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", "SecondParticipantAssignment")
+                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", null)
                         .WithMany()
-                        .HasForeignKey("SecondParticipantAssignmentId")
+                        .HasForeignKey("ParticipantAssignmentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Assignment");
-
-                    b.Navigation("FirstParticipantAssignment");
-
-                    b.Navigation("SecondParticipantAssignment");
                 });
 
             modelBuilder.Entity("MyProject.Data.Models.ParticipantAssignment", b =>
@@ -580,21 +530,15 @@ namespace MyProject.Data.Migrations
 
             modelBuilder.Entity("MyProject.Data.Models.ParticipantClassification", b =>
                 {
-                    b.HasOne("MyProject.Data.Models.ClassificationDimension", null)
+                    b.HasOne("MyProject.Data.Models.ClassificationAttribute", null)
                         .WithMany()
-                        .HasForeignKey("ClassificationDimensionId")
+                        .HasForeignKey("ClassificationAttributeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("MyProject.Data.Models.ClassificationLevel", null)
+                    b.HasOne("MyProject.Data.Models.Participant", null)
                         .WithMany()
-                        .HasForeignKey("ClassificationLevelId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("MyProject.Data.Models.ParticipantAssignment", null)
-                        .WithMany()
-                        .HasForeignKey("ParticipantAssignmentId")
+                        .HasForeignKey("ParticipantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

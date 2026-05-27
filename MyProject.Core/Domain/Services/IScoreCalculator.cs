@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using MyProject.Core.Domain.Constraints;
 using MyProject.Core.Domain.Entities;
-
+using MyProject.Core.Domain.ValueObjects;
 namespace MyProject.Core.Domain.Services;
 
 /// <summary>
@@ -15,5 +15,5 @@ public interface IScoreCalculator
     /// <param name="assignment">ההקצאה לחישוב ניקוד.</param>
     /// <param name="constraints">אילוצים רלוונטיים לחישוב הניקוד.</param>
     /// <returns>הניקוד המחושב.</returns>
-    decimal CalculateScore(Assignment assignment, IReadOnlyList<IConstraint> constraints);
+    Score CalculateScore(Assignment assignment, IReadOnlyList<IConstraint> constraints);
 }

@@ -1,51 +1,41 @@
 using System.Collections.Generic;
-using MyProject.Core.Domain.Enums;
+using MyProject.Core.Domain.ValueObjects;
 
 namespace MyProject.Core.Domain.Constraints;
 
 /// <summary>
-/// עזר לפענוח רמת מימד בודדת מתוך רשימת סיווגים של משתתף.
+/// עזר לאילוצי סיווג: קורא את רמת המשתתף רק במימד שהאילוץ מגדיר.
 /// </summary>
+/// <remarks>
+/// לפני המודל המאוחד נסרקה רשימה שטוחה של "סוגי סיווג".
+/// עכשיו לכל משתתף יש מילון מימד→רמה, והאילוץ מצביע במפורש על מימד אחד (<c>TargetDimension</c>).
+/// </remarks>
 internal static class ClassificationDimensionConstraintSupport
 {
     /// <summary>
-    /// מחזיר את ערך המימד אם בדיוק אחד מערכי <paramref name="dimensionLevels"/> מופיע אצל המשתתף; אחרת null.
+    /// מחזיר את רמת הערך של המשתתף במימד המבוקש, רק אם היא אחת מהרמות המותרות לאילוץ.
     /// </summary>
-    public static ClassificationType? TryResolveSingleDimensionLevel(
-        IReadOnlyList<ClassificationType> participantClassifications,
-        IReadOnlySet<ClassificationType> dimensionLevels)
+    /// <returns>null אם אין מימד במילון, או שהרמה לא ברשימת הרמות המותרות.</returns>
+    public static ClassificationLevelCode? TryGetLevelInDimension(
+        IReadOnlyDictionary<ClassificationDimensionCode, ClassificationLevelCode> participantClassifications,
+        ClassificationDimensionCode targetDimension,
+        IReadOnlySet<ClassificationLevelCode> allowedLevels)
     {
         if (participantClassifications is null || participantClassifications.Count == 0)
         {
             return null;
         }
 
-        ClassificationType? found = null;
-        foreach (var classification in participantClassifications)
+        if (!participantClassifications.TryGetValue(targetDimension, out var level))
         {
-            if (classification == ClassificationType.Unspecified)
-            {
-                continue;
-            }
-
-            if (!dimensionLevels.Contains(classification))
-            {
-                continue;
-            }
-
-            if (found.HasValue && found.Value != classification)
-            {
-                return null;
-            }
-
-            found = classification;
+            return null;
         }
 
-        return found;
+        return allowedLevels.Contains(level) ? level : null;
     }
 
-    public static HashSet<ClassificationType> ValidateAndCopyDimensionLevels(
-        IEnumerable<ClassificationType> dimensionLevels,
+    public static HashSet<ClassificationLevelCode> ValidateAndCopyDimensionLevels(
+        IEnumerable<ClassificationLevelCode> dimensionLevels,
         string paramName)
     {
         if (dimensionLevels is null)
@@ -53,14 +43,9 @@ internal static class ClassificationDimensionConstraintSupport
             throw new System.ArgumentNullException(paramName);
         }
 
-        var set = new HashSet<ClassificationType>();
+        var set = new HashSet<ClassificationLevelCode>();
         foreach (var level in dimensionLevels)
         {
-            if (level == ClassificationType.Unspecified)
-            {
-                throw new System.ArgumentException("Dimension levels cannot include Unspecified.", paramName);
-            }
-
             set.Add(level);
         }
 

@@ -7,23 +7,24 @@ using MyProject.Core.Domain.ValueObjects;
 namespace MyProject.Core.Domain.Constraints;
 
 /// <summary>
-/// אילוץ הפרדה: בכל קבוצה כל המשתתפים חייבים לשתף את אותה רמת מימד מתוך קבוצת הרמות.
+/// אילוץ הפרדה הומוגנית: בכל קבוצה כולם באותה רמת ערך במימד <see cref="TargetDimension"/>.
 /// </summary>
 /// <remarks>
-/// לכל משתתף חייבת להיות בדיוק רמה אחת מתוך <see cref="DimensionLevels"/> ברשימת הסיווגים שלו.
+/// <para>מגיע מ־Data כש־<c>AssignmentClassificationConstraint.IsBalanceOrSeparation == false</c>.</para>
+/// <para>שונה מאיזון יחסי — כאן אסור לערבב רמות שונות באותה קבוצה (למימד זה).</para>
 /// </remarks>
 public sealed class ClassificationHomogeneousGroupConstraint : IConstraint
 {
-    private readonly HashSet<ClassificationType> _dimensionLevels;
-    private readonly IReadOnlyDictionary<ParticipantId, IReadOnlyList<ClassificationType>> _participantClassifications;
+    private readonly ClassificationDimensionCode _targetDimension;
+    private readonly HashSet<ClassificationLevelCode> _dimensionLevels;
+    private readonly IReadOnlyDictionary<ParticipantId, IReadOnlyDictionary<ClassificationDimensionCode, ClassificationLevelCode>> _participantClassifications;
 
-    /// <summary>
-    /// מאתחל מופע חדש של <see cref="ClassificationHomogeneousGroupConstraint"/>.
-    /// </summary>
     public ClassificationHomogeneousGroupConstraint(
-        IEnumerable<ClassificationType> dimensionLevels,
-        IReadOnlyDictionary<ParticipantId, IReadOnlyList<ClassificationType>> participantClassifications)
+        ClassificationDimensionCode targetDimension,
+        IEnumerable<ClassificationLevelCode> dimensionLevels,
+        IReadOnlyDictionary<ParticipantId, IReadOnlyDictionary<ClassificationDimensionCode, ClassificationLevelCode>> participantClassifications)
     {
+        _targetDimension = targetDimension;
         _dimensionLevels = ClassificationDimensionConstraintSupport.ValidateAndCopyDimensionLevels(
             dimensionLevels,
             nameof(dimensionLevels));
@@ -36,34 +37,34 @@ public sealed class ClassificationHomogeneousGroupConstraint : IConstraint
         _participantClassifications = participantClassifications;
     }
 
-    /// <summary>
-    /// רמות המימד (מאפיינים בלעדיים) שעליהן חל האילוץ.
-    /// </summary>
-    public IReadOnlySet<ClassificationType> DimensionLevels => _dimensionLevels;
+    public ClassificationDimensionCode TargetDimension => _targetDimension;
 
-    /// <inheritdoc/>
+    public IReadOnlySet<ClassificationLevelCode> DimensionLevels => _dimensionLevels;
+
     public ConstraintType Type => ConstraintType.ClassificationHomogeneousGroup;
 
-    /// <inheritdoc/>
     public bool IsSatisfied(Assignment assignment)
     {
         foreach (var group in assignment.Groups)
         {
-            ClassificationType? groupLevel = null;
+            ClassificationLevelCode? groupLevel = null;
             foreach (var id in group.ParticipantIds)
             {
-                if (!_participantClassifications.TryGetValue(id, out var list))
+                if (!_participantClassifications.TryGetValue(id, out var map))
                 {
                     return false;
                 }
 
-                var level = ClassificationDimensionConstraintSupport.TryResolveSingleDimensionLevel(list, _dimensionLevels);
-                if (!level.HasValue)
+                var level = ClassificationDimensionConstraintSupport.TryGetLevelInDimension(
+                    map,
+                    _targetDimension,
+                    _dimensionLevels);
+                if (level is null)
                 {
                     return false;
                 }
 
-                if (!groupLevel.HasValue)
+                if (groupLevel is null)
                 {
                     groupLevel = level;
                 }
