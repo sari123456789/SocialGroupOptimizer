@@ -97,7 +97,9 @@ public static class ConstraintMapper
         IEnumerable<ParticipantClassification> participantClassifications,
         ParticipantAssignmentContext context,
         IReadOnlyDictionary<int, ParticipantId> participantIdentityByDbParticipantId,
-        int assignmentDbId)
+        int assignmentDbId,
+        int participantCount = 0,
+        long maxScaledDeviation = ClassificationProportionalBalanceConstraint.DefaultMaxScaledDeviation)
     {
         if (rows is null)
         {
@@ -146,7 +148,11 @@ public static class ConstraintMapper
             }
 
             constraints.Add(row.IsBalanceOrSeparation
-                ? new ClassificationProportionalBalanceConstraint(targetDimension, dimensionLevels, participantClassificationMap)
+                ? new ClassificationProportionalBalanceConstraint(
+                    targetDimension,
+                    dimensionLevels,
+                    participantClassificationMap,
+                    maxScaledDeviation)
                 : new ClassificationHomogeneousGroupConstraint(targetDimension, dimensionLevels, participantClassificationMap));
         }
 

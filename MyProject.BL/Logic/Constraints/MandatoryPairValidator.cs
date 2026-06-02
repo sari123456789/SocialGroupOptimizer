@@ -6,16 +6,17 @@ using MyProject.Core.Domain.Entities;
 namespace MyProject.BL.Logic.Constraints;
 
 /// <summary>
-/// מאמת שמשתתפים שחייבים להיות יחד אכן מוקצים לאותה קבוצה.
+/// מאמת שזוגות חובה נמצאים באותה קבוצה.
 /// </summary>
+/// <remarks>נקרא מ-: <see cref="ConstraintEngine"/> בלבד.</remarks>
 public sealed class MandatoryPairValidator
 {
     /// <summary>
-    /// בודק את כל אילוצי הזוג החובה ומחזיר הודעות שגיאה עבור הפרות.
+    /// בודק MandatoryPairConstraint ומחזיר הפרות.
     /// </summary>
-    /// <param name="assignment">ההקצאה לבדיקה.</param>
-    /// <param name="constraints">אילוצי זוג חובה לאימות.</param>
-    /// <returns>רשימת הודעות שגיאה; ריקה אם לא נמצאו הפרות.</returns>
+    /// <param name="assignment">החלוקה לבדיקה.</param>
+    /// <param name="constraints">זוגות חובה (כבר מסוננים).</param>
+    /// <returns>הודעות שגיאה מפורטות לפי סוג ההפרה.</returns>
     public IReadOnlyList<string> Validate(
         Assignment assignment,
         IReadOnlyList<MandatoryPairConstraint> constraints)
@@ -29,9 +30,11 @@ public sealed class MandatoryPairValidator
                 continue;
             }
 
+            // FirstOrDefault + Contains — מוצא באיזו קבוצה (אם בכלל) נמצא כל משתתף.
             var groupOfA = assignment.Groups.FirstOrDefault(g => g.ParticipantIds.Contains(constraint.ParticipantA));
             var groupOfB = assignment.Groups.FirstOrDefault(g => g.ParticipantIds.Contains(constraint.ParticipantB));
 
+            // ארבעה מצבים — הודעה שונה לכל אחד (עוזר בדיבוג וב-UI).
             if (groupOfA is null && groupOfB is null)
             {
                 errors.Add($"MandatoryPair violated: both {constraint.ParticipantA} and {constraint.ParticipantB} are missing from the assignment.");
@@ -46,6 +49,7 @@ public sealed class MandatoryPairValidator
             }
             else
             {
+                // שניהם משובצים אבל בקבוצות שונות — הפרת זוג חובה קלאסית.
                 errors.Add($"MandatoryPair violated: {constraint.ParticipantA} is in group {groupOfA.Id} but {constraint.ParticipantB} is in group {groupOfB.Id}.");
             }
         }

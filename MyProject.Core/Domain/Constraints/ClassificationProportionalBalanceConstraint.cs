@@ -16,7 +16,7 @@ namespace MyProject.Core.Domain.Constraints;
 /// </remarks>
 public sealed class ClassificationProportionalBalanceConstraint : IConstraint
 {
-    public const long DefaultMaxScaledDeviation = 10_000L;
+    public const long DefaultMaxScaledDeviation = 0L;
 
     private readonly ClassificationDimensionCode _targetDimension;
     private readonly HashSet<ClassificationLevelCode> _dimensionLevels;

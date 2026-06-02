@@ -1,9 +1,10 @@
 namespace MyProject.BL.Algorithm.InitialPlacement;
 
 /// <summary>
-/// תוצאת בדיקת היתכנות מוקדמת.
+/// תפקיד: מעטפת תוצאה לבדיקת היתכנות מוקדמת — מפרידה Feasible מ-Infeasible עם רשימת שגיאות.
 /// </summary>
 /// <remarks>
+/// נוצר ע"י <see cref="FeasibilityPreChecker.Check"/>; נצרך ע"י <see cref="InitialPlacementOrchestrator"/>.
 /// רשימת השגיאות ריקה כשהסטטוס הוא Feasible.
 /// </remarks>
 public sealed class FeasibilityPreCheckResult
@@ -15,24 +16,31 @@ public sealed class FeasibilityPreCheckResult
     }
 
     /// <summary>
-    /// סטטוס בדיקת ההיתכנות.
+    /// תפקיד: סטטוס בדיקת ההיתכנות.
     /// </summary>
+    /// <remarks>נקרא מ- <see cref="InitialPlacementOrchestrator.Run"/>.</remarks>
     public FeasibilityPreCheckStatus Status { get; }
 
     /// <summary>
-    /// שגיאות שנמצאו בבדיקות המוקדמות.
+    /// תפקיד: שגיאות שנמצאו; ריקה כש-Feasible.
     /// </summary>
+    /// <remarks>נקרא מ- <see cref="InitialPlacementOrchestrator.Run"/> — מועבר ל-InfeasiblePreCheck.</remarks>
     public IReadOnlyList<string> Errors { get; }
 
     /// <summary>
-    /// יוצר תוצאה שמאפשרת להמשיך לניסיון בניית חלוקה.
+    /// תפקיד: יוצר תוצאה שמאפשרת להמשיך לבניית חלוקה.
     /// </summary>
+    /// <returns>מעטפת Feasible ללא שגיאות.</returns>
+    /// <remarks>נקרא מ- <see cref="FeasibilityPreChecker.Check"/>.</remarks>
     public static FeasibilityPreCheckResult Feasible() =>
         new(FeasibilityPreCheckStatus.Feasible, Array.Empty<string>());
 
     /// <summary>
-    /// יוצר תוצאה שחוסמת המשך, עם רשימת הסתירות שנמצאו.
+    /// תפקיד: יוצר תוצאה שחוסמת המשך עם רשימת סתירות.
     /// </summary>
+    /// <param name="errors">הסתירות שנמצאו.</param>
+    /// <returns>מעטפת Infeasible.</returns>
+    /// <remarks>נקרא מ- <see cref="FeasibilityPreChecker.Check"/>.</remarks>
     public static FeasibilityPreCheckResult Infeasible(IReadOnlyList<string> errors) =>
         new(FeasibilityPreCheckStatus.Infeasible, errors);
 }

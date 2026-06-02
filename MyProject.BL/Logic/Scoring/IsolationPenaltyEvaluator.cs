@@ -6,23 +6,21 @@ using MyProject.Core.Domain.ValueObjects;
 namespace MyProject.BL.Logic.Scoring;
 
 /// <summary>
-/// מזהה משתתפים מבודדים חברתית בהקצאה ומחשב את הקנס המתאים.
+/// מזהה משתתפים מבודדים חברתית ומחשב קנס מצטבר.
 /// </summary>
-/// <remarks>
-/// משתתף מבודד הוא משתתף שאף אחת מהעדפותיו החברתיות לא סופקה בהקצאה.
-/// </remarks>
+/// <remarks>נקרא מ-: <see cref="ScoringManager"/> בלבד.</remarks>
 public sealed class IsolationPenaltyEvaluator
 {
     /// <summary>
-    /// מחשב את קנס הבידוד הכולל עבור ההקצאה.
+    /// מחשב קנס בידוד כולל להקצאה.
     /// </summary>
-    /// <param name="assignment">ההקצאה לניתוח.</param>
-    /// <param name="participants">כלל המשתתפים כולל העדפותיהם.</param>
-    /// <param name="penaltyPerIsolatedParticipant">ערך הקנס לכל משתתף מבודד.</param>
-    /// <param name="weight">משקל הרכיב הזה בניקוד הכולל.</param>
-    /// <returns>קנס הבידוד הכולל.</returns>
-    /// <exception cref="ArgumentNullException">נזרק כאשר <paramref name="assignment"/> או <paramref name="participants"/> הוא null.</exception>
-    /// <exception cref="ArgumentOutOfRangeException">נזרק כאשר <paramref name="weight"/> אינו חיובי.</exception>
+    /// <param name="assignment">החלוקה לניתוח.</param>
+    /// <param name="participants">משתתפים והעדפות — לזיהוי בידוד.</param>
+    /// <param name="penaltyPerIsolatedParticipant">ערך בסיס לכל משתתף מבודד (לפני משקל).</param>
+    /// <param name="weight">מכפיל חיובי מ-<see cref="Configuration.ScoringWeights"/>.</param>
+    /// <returns>קנס כולל כ-<see cref="Penalty"/>.</returns>
+    /// <exception cref="ArgumentNullException">כאשר <paramref name="assignment"/> או <paramref name="participants"/> הוא null.</exception>
+    /// <exception cref="ArgumentOutOfRangeException">כאשר <paramref name="weight"/> אינו חיובי או <paramref name="penaltyPerIsolatedParticipant"/> שלילי.</exception>
     public Penalty Evaluate(
         Assignment assignment,
         IReadOnlyList<Participant> participants,
@@ -59,28 +57,34 @@ public sealed class IsolationPenaltyEvaluator
                 continue;
             }
 
+            // משתתף ללא העדפות — לא נחשב מבודד (אין ציפייה חברתית).
             if (participant.Preferences.Count == 0)
             {
                 continue;
             }
 
+            // דגל: האם לפחות העדפה אחת מומשה בקבוצתו.
             var hasAnySatisfiedPreference = false;
+
             foreach (var preference in participant.Preferences)
             {
+                // && — גם המועדף משובץ וגם באותה קבוצה.
                 if (participantGroupLookup.TryGetValue(preference.PreferredParticipantId, out var preferredGroupId)
                     && participantGroupId == preferredGroupId)
                 {
                     hasAnySatisfiedPreference = true;
-                    break;
+                    break; // מספיק העדפה אחת — יוצאים מהלולאה הפנימית.
                 }
             }
 
+            // אין אף העדפה מומשה — משתתף מבודד חברתית.
             if (!hasAnySatisfiedPreference)
             {
                 isolatedCount++;
             }
         }
 
+        // נוסחה: מספר מבודדים × קנס בסיס × משקל.
         var totalPenalty = isolatedCount * penaltyPerIsolatedParticipant * weight;
         return new Penalty(totalPenalty);
     }

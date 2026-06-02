@@ -37,6 +37,8 @@ public sealed class ApplicationDbContext : DbContext
         {
             e.HasKey(m => m.ManagerId);
             e.Property(m => m.ManagerName).HasMaxLength(256);
+            e.Property(m => m.PasswordHash).HasMaxLength(256);
+            e.HasIndex(m => m.ManagerName).IsUnique();
         });
 
         modelBuilder.Entity<ManagementGroup>(e =>
@@ -82,6 +84,10 @@ public sealed class ApplicationDbContext : DbContext
             e.HasKey(a => a.AssignmentId);
             e.Property(a => a.AssignmentId).ValueGeneratedOnAdd();
             e.Property(a => a.AssignmentName).HasMaxLength(256);
+            e.Property(a => a.ValidationStatus).HasMaxLength(64).HasDefaultValue("PendingValidation");
+            e.Property(a => a.LastPlacementStatus).HasMaxLength(64);
+            e.Property(a => a.LastValidationErrors).HasMaxLength(4000);
+            e.Property(a => a.LastPlacementGroupsJson).HasMaxLength(8000);
             e.HasOne<ManagementGroup>()
                 .WithMany()
                 .HasForeignKey(a => a.ManagementGroupId)

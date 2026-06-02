@@ -3,8 +3,9 @@ using System;
 namespace MyProject.BL.Logic.Configuration;
 
 /// <summary>
-/// הגדרות זמן ריצה לתהליך ההקצאה.
+/// הגדרות זמן ריצה ללולאת חיפוש/שיפור (עצירה, קיפאון, גיוון).
 /// </summary>
+/// <remarks>תפקיד עתידי: LocalSearchEngine ו-Orchestrator לשיפור חלוקה.</remarks>
 public sealed class RuntimeSettings
 {
     /// <summary>
@@ -13,17 +14,17 @@ public sealed class RuntimeSettings
     public static readonly TimeSpan DefaultMaxRuntime = TimeSpan.FromSeconds(30);
 
     /// <summary>
-    /// סף קיפאון ברירת מחדל: מספר האיטרציות ללא שיפור לפני הפעלת גיוון.
+    /// סף קיפאון ברירת מחדל: איטרציות ללא שיפור לפני גיוון.
     /// </summary>
     public const int DefaultStagnationThreshold = 50;
 
     /// <summary>
-    /// סף גיוון ברירת מחדל: מספר פעמים שניתן להפעיל גיוון לפני עצירה.
+    /// סף גיוון ברירת מחדל: מקסימום הפעלות גיוון לפני עצירה.
     /// </summary>
     public const int DefaultDiversificationThreshold = 5;
 
     /// <summary>
-    /// מאתחל מופע חדש של <see cref="RuntimeSettings"/> עם הגדרות ברירת מחדל.
+    /// מאתחל עם ערכי ברירת מחדל.
     /// </summary>
     public RuntimeSettings()
         : this(DefaultMaxRuntime, DefaultStagnationThreshold, DefaultDiversificationThreshold)
@@ -31,14 +32,15 @@ public sealed class RuntimeSettings
     }
 
     /// <summary>
-    /// מאתחל מופע חדש של <see cref="RuntimeSettings"/> עם ערכים מותאמים.
+    /// מאתחל עם ערכי זמן ריצה מותאמים.
     /// </summary>
-    /// <param name="maxRuntime">זמן ריצה מקסימלי. חייב להיות חיובי.</param>
-    /// <param name="stagnationThreshold">מספר איטרציות ללא שיפור לפני גיוון. חייב להיות גדול מאפס.</param>
-    /// <param name="diversificationThreshold">מספר פעמים מקסימלי להפעלת גיוון. חייב להיות גדול מאפס.</param>
-    /// <exception cref="ArgumentOutOfRangeException">נזרק כאשר אחד מהערכים אינו חיובי.</exception>
+    /// <param name="maxRuntime">משך מקסימלי לתהליך — חייב להיות חיובי.</param>
+    /// <param name="stagnationThreshold">איטרציות ללא שיפור לפני גיוון — חייב להיות &gt; 0.</param>
+    /// <param name="diversificationThreshold">מקסימום הפעלות גיוון — חייב להיות &gt; 0.</param>
+    /// <exception cref="ArgumentOutOfRangeException">כאשר ערך אינו חיובי.</exception>
     public RuntimeSettings(TimeSpan maxRuntime, int stagnationThreshold, int diversificationThreshold)
     {
+        // TimeSpan.Zero — משך אפס; maxRuntime חייב להיות גדול מ-0.
         if (maxRuntime <= TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(maxRuntime), "Max runtime must be greater than zero.");
@@ -54,6 +56,8 @@ public sealed class RuntimeSettings
             throw new ArgumentOutOfRangeException(nameof(diversificationThreshold), "Diversification threshold must be greater than zero.");
         }
 
+        // StagnationThreshold — כמה איטרציות בלי שיפור לפני גיוון.
+        // DiversificationThreshold — כמה פעמים מותר להפעיל גיוון לפני עצירה.
         MaxRuntime = maxRuntime;
         StagnationThreshold = stagnationThreshold;
         DiversificationThreshold = diversificationThreshold;

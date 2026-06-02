@@ -35,8 +35,30 @@ namespace MyProject.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("LastPlacementGroupsJson")
+                        .HasMaxLength(8000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("LastPlacementStatus")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<DateTime?>("LastValidatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastValidationErrors")
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
                     b.Property<int>("ManagementGroupId")
                         .HasColumnType("int");
+
+                    b.Property<string>("ValidationStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasDefaultValue("PendingValidation");
 
                     b.HasKey("AssignmentId");
 
@@ -293,7 +315,15 @@ namespace MyProject.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.HasKey("ManagerId");
+
+                    b.HasIndex("ManagerName")
+                        .IsUnique();
 
                     b.ToTable("Managers");
                 });
