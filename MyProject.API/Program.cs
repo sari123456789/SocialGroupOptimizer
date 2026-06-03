@@ -150,6 +150,8 @@ builder.Services.AddSingleton<IAssignmentScorer, ScoringManager>();
 
 builder.Services.AddSingleton<IMoveEvaluator, MoveEvaluator>();
 
+builder.Services.AddSingleton<IMoveEvaluationBatch, MoveEvaluationBatch>();
+
 
 
 // InitialPlacementOrchestrator ╫₧╫¬╫צ╫₧╫¿ ╫נ╫¬ ╫¬╫פ╫£╫ש╫ת ╫פ╫ק╫£╫ץ╫º╫פ ╫פ╫¿╫נ╫⌐╫ץ╫á╫ש╫¬ ╫ס-BL.
