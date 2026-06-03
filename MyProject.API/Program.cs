@@ -43,6 +43,7 @@ using MyProject.API.Placement.Excel;
 using MyProject.BL.Algorithm.InitialPlacement.Orchestration;
 
 using MyProject.BL.Algorithm.LocalSearch.Evaluation;
+using MyProject.BL.Algorithm.LocalSearch.Execution;
 using MyProject.BL.Algorithm.LocalSearch.Selection;
 
 using MyProject.BL.Logic.Configuration;
@@ -154,6 +155,8 @@ builder.Services.AddSingleton<IMoveEvaluator, MoveEvaluator>();
 builder.Services.AddSingleton<IMoveEvaluationBatch, MoveEvaluationBatch>();
 
 builder.Services.AddSingleton<ISearchStrategy, BestImprovementSearchStrategy>();
+
+builder.Services.AddSingleton<IMoveExecutor, MoveExecutor>();
 
 
 
