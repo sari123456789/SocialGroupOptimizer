@@ -53,6 +53,26 @@ public sealed class AlgorithmSettings
     public const int DefaultClassificationBalanceTolerancePercent = 10;
 
     /// <summary>
+    /// סף ברירת מחדל ליחס מבודדים (0.0–1.0) להפעלת אסטרטגיית מבודדים.
+    /// </summary>
+    public const double DefaultHighIsolationRatioThreshold = 0.05;
+
+    /// <summary>
+    /// סף ברירת מחדל ליחס קבוצות חלשות (0.0–1.0).
+    /// </summary>
+    public const double DefaultHighWeakGroupRatioThreshold = 0.20;
+
+    /// <summary>
+    /// סף ברירת מחדל לקיפאון קל — איטרציות ללא שיפור.
+    /// </summary>
+    public const int DefaultLightStagnationThreshold = 8;
+
+    /// <summary>
+    /// סף ברירת מחדל לקיפאון כבד — איטרציות ללא שיפור.
+    /// </summary>
+    public const int DefaultHeavyStagnationThreshold = 15;
+
+    /// <summary>
     /// מאתחל עם כל ערכי ברירת המחדל.
     /// </summary>
     public AlgorithmSettings()
@@ -64,18 +84,17 @@ public sealed class AlgorithmSettings
             DefaultSolverTimeoutMs,
             DefaultSolverBaseUrl,
             DefaultSolverPollIntervalMs,
-            DefaultClassificationBalanceTolerancePercent)
+            DefaultClassificationBalanceTolerancePercent,
+            DefaultHighIsolationRatioThreshold,
+            DefaultHighWeakGroupRatioThreshold,
+            DefaultLightStagnationThreshold,
+            DefaultHeavyStagnationThreshold)
     {
     }
 
     /// <summary>
     /// מאתחל עם פרמטרי ליבה; שאר הגדרות הפותר נשארות בברירת מחדל.
     /// </summary>
-    /// <param name="maxIterations">מקסימום איטרציות — חייב להיות &gt; 0.</param>
-    /// <param name="candidateCount">מועמדים לצעד — חייב להיות &gt; 0.</param>
-    /// <param name="repairAttempts">ניסיונות תיקון — חייב להיות &gt; 0.</param>
-    /// <param name="solverDifficultyThreshold">סף מעבר לפותר — בין 0 ל-100.</param>
-    /// <exception cref="ArgumentOutOfRangeException">כאשר ערך אינו בטווח המותר.</exception>
     public AlgorithmSettings(int maxIterations, int candidateCount, int repairAttempts, int solverDifficultyThreshold)
         : this(
             maxIterations,
@@ -85,23 +104,17 @@ public sealed class AlgorithmSettings
             DefaultSolverTimeoutMs,
             DefaultSolverBaseUrl,
             DefaultSolverPollIntervalMs,
-            DefaultClassificationBalanceTolerancePercent)
+            DefaultClassificationBalanceTolerancePercent,
+            DefaultHighIsolationRatioThreshold,
+            DefaultHighWeakGroupRatioThreshold,
+            DefaultLightStagnationThreshold,
+            DefaultHeavyStagnationThreshold)
     {
     }
 
     /// <summary>
-    /// מאתחל עם כל הפרמטרים כולל הגדרות פותר חיצוני.
+    /// מאתחל עם כל הפרמטרים כולל הגדרות פותר חיצוני וספי יצירת מועמדים.
     /// </summary>
-    /// <param name="maxIterations">מקסימום איטרציות.</param>
-    /// <param name="candidateCount">מועמדים לצעד.</param>
-    /// <param name="repairAttempts">ניסיונות תיקון.</param>
-    /// <param name="solverDifficultyThreshold">סף קושי לפותר (0–100).</param>
-    /// <param name="solverTimeoutMs">timeout לפותר (1–300000 מ"ש).</param>
-    /// <param name="solverBaseUrl">כתובת בסיס לשירות הפותר — לא ריקה.</param>
-    /// <param name="solverPollIntervalMs">מרווח polling לסטטוס פותר.</param>
-    /// <param name="classificationBalanceTolerancePercent">סטייה מותרת באיזון סיווג (0–50).</param>
-    /// <exception cref="ArgumentOutOfRangeException">כאשר מספר שלילי או מחוץ לטווח.</exception>
-    /// <exception cref="ArgumentException">כאשר כתובת הפותר ריקה.</exception>
     public AlgorithmSettings(
         int maxIterations,
         int candidateCount,
@@ -110,9 +123,12 @@ public sealed class AlgorithmSettings
         int solverTimeoutMs,
         string solverBaseUrl,
         int solverPollIntervalMs,
-        int classificationBalanceTolerancePercent)
+        int classificationBalanceTolerancePercent,
+        double highIsolationRatioThreshold = DefaultHighIsolationRatioThreshold,
+        double highWeakGroupRatioThreshold = DefaultHighWeakGroupRatioThreshold,
+        int lightStagnationThreshold = DefaultLightStagnationThreshold,
+        int heavyStagnationThreshold = DefaultHeavyStagnationThreshold)
     {
-        // כל בדיקה זורקת ArgumentOutOfRangeException — fail-fast לפני שמירת ערכים לא חוקיים.
         if (maxIterations <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(maxIterations), "Max iterations must be greater than zero.");
@@ -128,19 +144,16 @@ public sealed class AlgorithmSettings
             throw new ArgumentOutOfRangeException(nameof(repairAttempts), "Repair attempts must be greater than zero.");
         }
 
-        // סף קושי — אחוז 0–100; מחוץ לטווח = הגדרה לא הגיונית.
         if (solverDifficultyThreshold < 0 || solverDifficultyThreshold > 100)
         {
             throw new ArgumentOutOfRangeException(nameof(solverDifficultyThreshold), "Solver difficulty threshold must be between 0 and 100.");
         }
 
-        // "is < 1 or > 300_000" — pattern matching לטווח timeout (1 מ"ש עד 5 דקות).
         if (solverTimeoutMs is < 1 or > 300_000)
         {
             throw new ArgumentOutOfRangeException(nameof(solverTimeoutMs), "Solver timeout must be between 1 and 300000 milliseconds.");
         }
 
-        // IsNullOrWhiteSpace — דוחה null, ריק, ורווחים בלבד.
         if (string.IsNullOrWhiteSpace(solverBaseUrl))
         {
             throw new ArgumentException("Solver base URL must not be empty.", nameof(solverBaseUrl));
@@ -158,7 +171,41 @@ public sealed class AlgorithmSettings
                 "Classification balance tolerance must be between 0 and 50 percent.");
         }
 
-        // get-only properties — נקבעים פעם אחת בבנאי (immutable object).
+        if (highIsolationRatioThreshold is < 0.0 or > 1.0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(highIsolationRatioThreshold),
+                "High isolation ratio threshold must be between 0.0 and 1.0.");
+        }
+
+        if (highWeakGroupRatioThreshold is < 0.0 or > 1.0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(highWeakGroupRatioThreshold),
+                "High weak group ratio threshold must be between 0.0 and 1.0.");
+        }
+
+        if (lightStagnationThreshold <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(lightStagnationThreshold),
+                "Light stagnation threshold must be greater than zero.");
+        }
+
+        if (heavyStagnationThreshold <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(heavyStagnationThreshold),
+                "Heavy stagnation threshold must be greater than zero.");
+        }
+
+        if (lightStagnationThreshold > heavyStagnationThreshold)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(lightStagnationThreshold),
+                "Light stagnation threshold must not exceed heavy stagnation threshold.");
+        }
+
         MaxIterations = maxIterations;
         CandidateCount = candidateCount;
         RepairAttempts = repairAttempts;
@@ -167,6 +214,10 @@ public sealed class AlgorithmSettings
         SolverBaseUrl = solverBaseUrl;
         SolverPollIntervalMs = solverPollIntervalMs;
         ClassificationBalanceTolerancePercent = classificationBalanceTolerancePercent;
+        HighIsolationRatioThreshold = highIsolationRatioThreshold;
+        HighWeakGroupRatioThreshold = highWeakGroupRatioThreshold;
+        LightStagnationThreshold = lightStagnationThreshold;
+        HeavyStagnationThreshold = heavyStagnationThreshold;
     }
 
     /// <summary>
@@ -208,6 +259,26 @@ public sealed class AlgorithmSettings
     /// אחוז סטייה מותרת מאיזון סיווג יחסי בין קבוצות.
     /// </summary>
     public int ClassificationBalanceTolerancePercent { get; }
+
+    /// <summary>
+    /// סף יחס מבודדים (0.0–1.0) להפעלת אסטרטגיית משתתפים מבודדים.
+    /// </summary>
+    public double HighIsolationRatioThreshold { get; }
+
+    /// <summary>
+    /// סף יחס קבוצות חלשות (0.0–1.0) להפעלת אסטרטגיית קבוצות חלשות.
+    /// </summary>
+    public double HighWeakGroupRatioThreshold { get; }
+
+    /// <summary>
+    /// קיפאון קל — איטרציות ללא שיפור; מפעיל NearMiss.
+    /// </summary>
+    public int LightStagnationThreshold { get; }
+
+    /// <summary>
+    /// קיפאון כבד — איטרציות ללא שיפור; מפעיל ControlledRandom.
+    /// </summary>
+    public int HeavyStagnationThreshold { get; }
 
     /// <summary>
     /// מחשב סטייה מקסימלית בקנה מידה לפי מספר משתתפים ואחוז סובלנות.

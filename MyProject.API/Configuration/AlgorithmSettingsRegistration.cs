@@ -18,6 +18,18 @@ internal static class AlgorithmSettingsRegistration
             section.GetValue(nameof(AlgorithmSettings.SolverPollIntervalMs), AlgorithmSettings.DefaultSolverPollIntervalMs),
             section.GetValue(
                 nameof(AlgorithmSettings.ClassificationBalanceTolerancePercent),
-                AlgorithmSettings.DefaultClassificationBalanceTolerancePercent));
+                AlgorithmSettings.DefaultClassificationBalanceTolerancePercent),
+            section.GetValue(
+                nameof(AlgorithmSettings.HighIsolationRatioThreshold),
+                AlgorithmSettings.DefaultHighIsolationRatioThreshold),
+            section.GetValue(
+                nameof(AlgorithmSettings.HighWeakGroupRatioThreshold),
+                AlgorithmSettings.DefaultHighWeakGroupRatioThreshold),
+            section.GetValue(
+                nameof(AlgorithmSettings.LightStagnationThreshold),
+                AlgorithmSettings.DefaultLightStagnationThreshold),
+            section.GetValue(
+                nameof(AlgorithmSettings.HeavyStagnationThreshold),
+                AlgorithmSettings.DefaultHeavyStagnationThreshold));
     }
 }

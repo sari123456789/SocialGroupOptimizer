@@ -7,25 +7,11 @@ namespace MyProject.BL.Algorithm.LocalSearch.RuntimeData;
 /// <summary>
 /// בונה <see cref="RuntimeDataSnapshot"/> מניתוח החלוקה הנוכחית בלבד.
 /// </summary>
-/// <remarks>
-/// <para>תפקיד: הרכבת אינדקסים סטטיים ופרופילים דינמיים — cache לחיפוש מקומי; לא בודק אילוצים ולא מבצע moves.</para>
-/// <para>נקרא מ-: מתזמר Local Search עתידי — לפני כל איטרציה/הערכת moves; אין שימוש חיצוני כרגע.</para>
-/// <list type="bullet">
-///   <item><description>אינדקסים — העדפות, הדדיות, קלאסטרים</description></item>
-///   <item><description>פרופילים — לכל משתתף/קבוצה/קלאסטר חברים</description></item>
-/// </list>
-/// </remarks>
 public static class RuntimeDataBuilder
 {
     /// <summary>
     /// נקודת כניסה: בונה את כל מבני הנתונים מהחלוקה הנוכחית.
     /// </summary>
-    /// <param name="state">מצב החלוקה הנוכחי — מקור לפרופילים דינמיים.</param>
-    /// <param name="participants">כל המשתתפים עם העדפות — מקור לאינדקסים סטטיים.</param>
-    /// <returns>RuntimeDataSnapshot read-only עם כל האינדקסים והפרופילים.</returns>
-    /// <remarks>
-    /// <para>נקרא מ-: מתזמר Local Search עתידי — אין קריאות חיצוניות כרגע.</para>
-    /// </remarks>
     public static RuntimeDataSnapshot Build(
         AssignmentState state,
         IReadOnlyList<Participant> participants)
@@ -40,17 +26,20 @@ public static class RuntimeDataBuilder
             throw new ArgumentNullException(nameof(participants));
         }
 
-        // ===== שלב 1: בניית אינדקסים גלובליים =====
-        // הסדר חשוב: Mutual תלוי ב-Preference; FriendCluster תלוי ב-Mutual.
         var preferenceIndex = ParticipantPreferenceIndex.Create(participants);
         var mutualPreferenceIndex = MutualPreferenceIndex.Create(preferenceIndex, participants);
         var friendClusterIndex = FriendClusterIndex.Create(mutualPreferenceIndex, participants);
         var dominantParticipantIndex = DominantParticipantIndex.Create(preferenceIndex, participants);
         var unrequestedParticipantIndex = UnrequestedParticipantIndex.Create(preferenceIndex, participants);
 
-        // ===== שלב 2: פרופילים לפי מצב השיבוץ הנוכחי =====
         var participantProfiles = BuildParticipantProfiles(state, preferenceIndex);
+        var isolatedParticipantIds = BuildIsolatedParticipantIds(participantProfiles);
+        var nearMissParticipantIds = BuildNearMissParticipantIds(participantProfiles);
+        var weakGroupIdsByWeakness = BuildWeakGroupIdsByWeakness(participantProfiles);
         var groupProfiles = BuildGroupProfiles(state);
+        var lowContributionParticipantIdsByGroup = BuildLowContributionParticipantIdsByGroup(
+            groupProfiles,
+            participantProfiles);
         var closedFriendGroupProfiles = BuildClosedFriendGroupProfiles(
             state,
             mutualPreferenceIndex,
@@ -64,25 +53,19 @@ public static class RuntimeDataBuilder
             unrequestedParticipantIndex,
             participantProfiles,
             groupProfiles,
-            closedFriendGroupProfiles);
+            closedFriendGroupProfiles,
+            isolatedParticipantIds,
+            nearMissParticipantIds,
+            weakGroupIdsByWeakness,
+            lowContributionParticipantIdsByGroup);
     }
 
-    /// <summary>
-    /// לכל משתתף: כמה העדפות בתוך הקבוצה / מחוץ לה, והאם מבודד או near-miss.
-    /// </summary>
-    /// <param name="state">מצב החלוקה הנוכחי.</param>
-    /// <param name="preferenceIndex">אינדקס העדפות לשאילתות.</param>
-    /// <returns>מילון ParticipantId → ParticipantRuntimeProfile.</returns>
-    /// <remarks>
-    /// <para>נקרא מ-: <see cref="Build"/> (שלב 2 — פרופילי משתתפים).</para>
-    /// </remarks>
     private static Dictionary<ParticipantId, ParticipantRuntimeProfile> BuildParticipantProfiles(
         AssignmentState state,
         ParticipantPreferenceIndex preferenceIndex)
     {
         var profiles = new Dictionary<ParticipantId, ParticipantRuntimeProfile>();
 
-        // deconstruction: (participantId, currentGroupId) — מפרק זוג key-value מהמילון.
         foreach (var (participantId, currentGroupId) in state.ParticipantToGroup)
         {
             var preferences = preferenceIndex.GetPreferredByParticipant(participantId);
@@ -102,9 +85,7 @@ public static class RuntimeDataBuilder
             }
 
             var hasPreferences = preferences.Count > 0;
-            // מבודד = יש העדפות אבל אף אחת לא בקבוצה שלו.
             var isIsolated = hasPreferences && preferredInsideCount == 0;
-            // near-miss = חלק בפנים, חלק בחוץ — פוטנציאל לשיפור ב-swap.
             var isNearMiss = preferredInsideCount > 0 && preferredOutsideCount > 0;
 
             profiles[participantId] = new ParticipantRuntimeProfile(
@@ -120,20 +101,93 @@ public static class RuntimeDataBuilder
     }
 
     /// <summary>
-    /// בונה פרופיל runtime לכל קבוצה — חברים וגודל.
+    /// מזהי מבודדים — ממוינים לפי פוטנציאל שיפור (מועדפים-בחוץ יורד).
     /// </summary>
-    /// <param name="state">מצב החלוקה הנוכחי.</param>
-    /// <returns>מילון GroupId → GroupRuntimeProfile.</returns>
-    /// <remarks>
-    /// <para>נקרא מ-: <see cref="Build"/> (שלב 2 — פרופילי קבוצות).</para>
-    /// </remarks>
+    private static IReadOnlyList<ParticipantId> BuildIsolatedParticipantIds(
+        IReadOnlyDictionary<ParticipantId, ParticipantRuntimeProfile> participantProfiles)
+    {
+        return participantProfiles.Values
+            .Where(profile => profile.IsIsolated)
+            .OrderByDescending(profile => profile.PreferredOutsideCount)
+            .ThenBy(profile => profile.ParticipantId.Value, StringComparer.Ordinal)
+            .Select(profile => profile.ParticipantId)
+            .ToList();
+    }
+
+    /// <summary>
+    /// מזהי near-miss — אותו סדר מיון כמו מבודדים.
+    /// </summary>
+    private static IReadOnlyList<ParticipantId> BuildNearMissParticipantIds(
+        IReadOnlyDictionary<ParticipantId, ParticipantRuntimeProfile> participantProfiles)
+    {
+        return participantProfiles.Values
+            .Where(profile => profile.IsNearMiss)
+            .OrderByDescending(profile => profile.PreferredOutsideCount)
+            .ThenBy(profile => profile.ParticipantId.Value, StringComparer.Ordinal)
+            .Select(profile => profile.ParticipantId)
+            .ToList();
+    }
+
+    /// <summary>
+    /// קבוצות חלשות: חולשה = סכום PreferredOutsideCount של חברי הקבוצה; רק חולשה &gt; 0.
+    /// </summary>
+    private static IReadOnlyList<GroupId> BuildWeakGroupIdsByWeakness(
+        IReadOnlyDictionary<ParticipantId, ParticipantRuntimeProfile> participantProfiles)
+    {
+        var weaknessByGroup = new Dictionary<GroupId, int>();
+
+        foreach (var profile in participantProfiles.Values)
+        {
+            weaknessByGroup.TryGetValue(profile.CurrentGroupId, out var current);
+            weaknessByGroup[profile.CurrentGroupId] = current + profile.PreferredOutsideCount;
+        }
+
+        return weaknessByGroup
+            .Where(entry => entry.Value > 0)
+            .OrderByDescending(entry => entry.Value)
+            .ThenBy(entry => entry.Key.Value)
+            .Select(entry => entry.Key)
+            .ToList();
+    }
+
+    /// <summary>
+    /// לכל קבוצה: חברים ממוינים מתרומה נמוכה לגבוהה (מבודדים ראשונים).
+    /// </summary>
+    private static Dictionary<GroupId, IReadOnlyList<ParticipantId>> BuildLowContributionParticipantIdsByGroup(
+        IReadOnlyDictionary<GroupId, GroupRuntimeProfile> groupProfiles,
+        IReadOnlyDictionary<ParticipantId, ParticipantRuntimeProfile> participantProfiles)
+    {
+        var result = new Dictionary<GroupId, IReadOnlyList<ParticipantId>>();
+
+        foreach (var (groupId, groupProfile) in groupProfiles)
+        {
+            if (groupProfile.Participants.Count == 0)
+            {
+                continue;
+            }
+
+            var sorted = groupProfile.Participants
+                .Select(memberId => participantProfiles.TryGetValue(memberId, out var profile) ? profile : null)
+                .Where(profile => profile is not null)
+                .OrderByDescending(profile => profile!.IsIsolated)
+                .ThenBy(profile => profile!.PreferredInsideCount)
+                .ThenByDescending(profile => profile!.PreferredOutsideCount)
+                .ThenBy(profile => profile!.ParticipantId.Value, StringComparer.Ordinal)
+                .Select(profile => profile!.ParticipantId)
+                .ToList();
+
+            result[groupId] = sorted;
+        }
+
+        return result;
+    }
+
     private static Dictionary<GroupId, GroupRuntimeProfile> BuildGroupProfiles(AssignmentState state)
     {
         var profiles = new Dictionary<GroupId, GroupRuntimeProfile>();
 
         foreach (var (groupId, participants) in state.GroupToParticipants)
         {
-            // ToList() — עותק כדי שלא ישתנה הרשימה המקורית ב-state.
             var participantsCopy = participants.ToList();
             profiles[groupId] = new GroupRuntimeProfile(
                 groupId,
@@ -144,16 +198,6 @@ public static class RuntimeDataBuilder
         return profiles;
     }
 
-    /// <summary>
-    /// קלאסטרים של חברים הדדיים — האם מפוצלים בין קבוצות.
-    /// </summary>
-    /// <param name="state">מצב החלוקה הנוכחי.</param>
-    /// <param name="mutualPreferenceIndex">אינדקס הדדיות — לספירת קשרים.</param>
-    /// <param name="friendClusterIndex">אינדקס קלאסטרים — לרשימת חברים.</param>
-    /// <returns>רשימת ClosedFriendGroupProfile — רק קלאסטרים עם ≥2 חברים.</returns>
-    /// <remarks>
-    /// <para>נקרא מ-: <see cref="Build"/> (שלב 2 — פרופילי קלאסטרים).</para>
-    /// </remarks>
     private static List<ClosedFriendGroupProfile> BuildClosedFriendGroupProfiles(
         AssignmentState state,
         MutualPreferenceIndex mutualPreferenceIndex,
@@ -170,7 +214,6 @@ public static class RuntimeDataBuilder
 
             var clusterId = friendClusterIndex.GetClusterId(cluster[0]);
             var mutualConnectionCount = CountMutualConnections(cluster, mutualPreferenceIndex);
-            // densityScore — 0..1, כמה "צפוף" הקלאסטר מבחינת קשרים הדדיים.
             var densityScore = ComputeDensityScore(cluster.Count, mutualConnectionCount);
             var currentGroupIds = cluster
                 .Select(memberId => state.ParticipantToGroup[memberId])
@@ -192,22 +235,12 @@ public static class RuntimeDataBuilder
             .ToList();
     }
 
-    /// <summary>
-    /// סופר זוגות עם העדפה הדדית בתוך הקלאסטר (משולשים לא נספרים כפול).
-    /// </summary>
-    /// <param name="members">חברי הקלאסטר.</param>
-    /// <param name="mutualPreferenceIndex">אינדקס הדדיות — לבדיקת AreMutual.</param>
-    /// <returns>מספר קשרים הדדיים ייחודיים בקלאסטר.</returns>
-    /// <remarks>
-    /// <para>נקרא מ-: <see cref="BuildClosedFriendGroupProfiles"/>.</para>
-    /// </remarks>
     private static int CountMutualConnections(
         IReadOnlyList<ParticipantId> members,
         MutualPreferenceIndex mutualPreferenceIndex)
     {
         var connectionCount = 0;
 
-        // לולאה כפולה — כל זוג (i,j) פעם אחת, i &lt; j.
         for (var i = 0; i < members.Count; i++)
         {
             for (var j = i + 1; j < members.Count; j++)
@@ -222,15 +255,6 @@ public static class RuntimeDataBuilder
         return connectionCount;
     }
 
-    /// <summary>
-    /// צפיפות = קשרים_קיימים / קשרים_אפשריים. בגרף מלא: n*(n-1)/2.
-    /// </summary>
-    /// <param name="memberCount">מספר חברי הקלאסטר.</param>
-    /// <param name="mutualConnectionCount">מספר קשרים הדדיים קיימים.</param>
-    /// <returns>צפיפות בין 0 ל-1; 0 אם memberCount &lt; 2.</returns>
-    /// <remarks>
-    /// <para>נקרא מ-: <see cref="BuildClosedFriendGroupProfiles"/>.</para>
-    /// </remarks>
     private static double ComputeDensityScore(int memberCount, int mutualConnectionCount)
     {
         if (memberCount < 2)
@@ -242,24 +266,12 @@ public static class RuntimeDataBuilder
         return mutualConnectionCount / maxPossibleConnections;
     }
 
-    /// <summary>
-    /// בודק האם preferredParticipantId נמצא באותה קבוצה כמו participantId.
-    /// </summary>
-    /// <param name="state">מצב החלוקה הנוכחי.</param>
-    /// <param name="participantId">המשתתף שבודקים את ההעדפות שלו.</param>
-    /// <param name="currentGroupId">קבוצת המשתתף.</param>
-    /// <param name="preferredParticipantId">המועדף לבדיקה.</param>
-    /// <returns>true אם המועדף משובץ באותה קבוצה; false אם לא משובץ או בקבוצה אחרת.</returns>
-    /// <remarks>
-    /// <para>נקרא מ-: <see cref="BuildParticipantProfiles"/>.</para>
-    /// </remarks>
     private static bool IsPreferredInSameGroup(
         AssignmentState state,
         ParticipantId participantId,
         GroupId currentGroupId,
         ParticipantId preferredParticipantId)
     {
-        // TryGetValue — בטוח: אם המועדף לא משובץ, false.
         return state.ParticipantToGroup.TryGetValue(preferredParticipantId, out var preferredGroupId)
             && preferredGroupId == currentGroupId;
     }
