@@ -1,24 +1,24 @@
+﻿// =============================================================================
+
+// Program.cs Γאפ ╫á╫º╫ץ╫ף╫¬ ╫פ╫¢╫á╫ש╫í╫פ ╫⌐╫£ ╫⌐╫¢╫ס╫¬ ╫פ-API.
+
 // =============================================================================
 
-// Program.cs — נקודת הכניסה של שכבת ה-API.
+// ╫¬╫ñ╫º╫ש╫ף ╫פ╫º╫ץ╫ס╫Ñ:
 
-// =============================================================================
+// 1) ╫£╫º╫¿╫ץ╫נ ╫פ╫ע╫ף╫¿╫ץ╫¬ ╫₧-appsettings.json
 
-// תפקיד הקובץ:
+// 2) ╫£╫¿╫⌐╫ץ╫¥ ╫⌐╫ש╫¿╫ץ╫¬╫ש╫¥ (Dependency Injection)
 
-// 1) לקרוא הגדרות מ-appsettings.json
+// 3) ╫£╫פ╫ע╫ף╫ש╫¿ ╫נ╫ש╫₧╫ץ╫¬ JWT, CORS ╫ץ-Swagger
 
-// 2) לרשום שירותים (Dependency Injection)
-
-// 3) להגדיר אימות JWT, CORS ו-Swagger
-
-// 4) לבנות את pipeline של ASP.NET Core ולהפעיל את השרת
+// 4) ╫£╫ס╫á╫ץ╫¬ ╫נ╫¬ pipeline ╫⌐╫£ ASP.NET Core ╫ץ╫£╫פ╫ñ╫ó╫ש╫£ ╫נ╫¬ ╫פ╫⌐╫¿╫¬
 
 //
 
-// תחביר "var builder = WebApplication.CreateBuilder(args)":
+// ╫¬╫ק╫ס╫ש╫¿ "var builder = WebApplication.CreateBuilder(args)":
 
-// יוצר אובייקט בנייה ל-WebApplication. args מגיע משורת הפקודה dotnet run.
+// ╫ש╫ץ╫ª╫¿ ╫נ╫ץ╫ס╫ש╫ש╫º╫ר ╫ס╫á╫ש╫ש╫פ ╫£-WebApplication. args ╫₧╫ע╫ש╫ó ╫₧╫⌐╫ץ╫¿╫¬ ╫פ╫ñ╫º╫ץ╫ף╫פ dotnet run.
 
 // =============================================================================
 
@@ -42,9 +42,13 @@ using MyProject.API.Placement.Excel;
 
 using MyProject.BL.Algorithm.InitialPlacement.Orchestration;
 
+using MyProject.BL.Algorithm.LocalSearch.Evaluation;
+
 using MyProject.BL.Logic.Configuration;
 
 using MyProject.BL.Logic.Constraints;
+
+using MyProject.BL.Logic.Scoring;
 
 using MyProject.Core.Domain.Services;
 
@@ -58,11 +62,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 
 
-// ===== שלב 1: חיבור למסד =====
+// ===== ╫⌐╫£╫ס 1: ╫ק╫ש╫ס╫ץ╫¿ ╫£╫₧╫í╫ף =====
 
-// GetConnectionString קורא מ-Configuration את המפתח "DefaultConnection".
+// GetConnectionString ╫º╫ץ╫¿╫נ ╫₧-Configuration ╫נ╫¬ ╫פ╫₧╫ñ╫¬╫ק "DefaultConnection".
 
-// תחביר "?? throw" אומר: אם החיבור חסר — עוצרים מיד עם חריגה ברורה.
+// ╫¬╫ק╫ס╫ש╫¿ "?? throw" ╫נ╫ץ╫₧╫¿: ╫נ╫¥ ╫פ╫ק╫ש╫ס╫ץ╫¿ ╫ק╫í╫¿ Γאפ ╫ó╫ץ╫ª╫¿╫ש╫¥ ╫₧╫ש╫ף ╫ó╫¥ ╫ק╫¿╫ש╫ע╫פ ╫ס╫¿╫ץ╫¿╫פ.
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
 
@@ -70,17 +74,17 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 
 
 
-// AddApplicationPersistence מוגדר ב-MyProject.Data/ServiceCollectionExtensions.cs
+// AddApplicationPersistence ╫₧╫ץ╫ע╫ף╫¿ ╫ס-MyProject.Data/ServiceCollectionExtensions.cs
 
-// ורושם ApplicationDbContext עם SQL Server.
+// ╫ץ╫¿╫ץ╫⌐╫¥ ApplicationDbContext ╫ó╫¥ SQL Server.
 
 builder.Services.AddApplicationPersistence(connectionString);
 
 
 
-// ===== שלב 2: רישום שירותי Placement (Scoped) =====
+// ===== ╫⌐╫£╫ס 2: ╫¿╫ש╫⌐╫ץ╫¥ ╫⌐╫ש╫¿╫ץ╫¬╫ש Placement (Scoped) =====
 
-// Scoped = מופע חדש לכל בקשת HTTP. מתאים לשירותים שמשתמשים ב-DbContext.
+// Scoped = ╫₧╫ץ╫ñ╫ó ╫ק╫ף╫⌐ ╫£╫¢╫£ ╫ס╫º╫⌐╫¬ HTTP. ╫₧╫¬╫נ╫ש╫¥ ╫£╫⌐╫ש╫¿╫ץ╫¬╫ש╫¥ ╫⌐╫₧╫⌐╫¬╫₧╫⌐╫ש╫¥ ╫ס-DbContext.
 
 builder.Services.AddScoped<AssignmentPlacementLoader>();
 
@@ -104,11 +108,11 @@ builder.Services.AddScoped<ParticipantsExcelToInitialPlacementMapper>();
 
 
 
-// ===== שלב 3: אימות =====
+// ===== ╫⌐╫£╫ס 3: ╫נ╫ש╫₧╫ץ╫¬ =====
 
-// AuthService — בודק שם+סיסמה מול המסד (BCrypt).
+// AuthService Γאפ ╫ס╫ץ╫ף╫º ╫⌐╫¥+╫í╫ש╫í╫₧╫פ ╫₧╫ץ╫£ ╫פ╫₧╫í╫ף (BCrypt).
 
-// JwtTokenService — מנפיק JWT לאחר התחברות מוצלחת.
+// JwtTokenService Γאפ ╫₧╫á╫ñ╫ש╫º JWT ╫£╫נ╫ק╫¿ ╫פ╫¬╫ק╫ס╫¿╫ץ╫¬ ╫₧╫ץ╫ª╫£╫ק╫¬.
 
 builder.Services.AddScoped<AuthService>();
 
@@ -116,37 +120,45 @@ builder.Services.AddScoped<JwtTokenService>();
 
 
 
-// Configure<T> קושר קטע הגדרות מ-appsettings ל-JwtSettings (Key, Issuer, Audience...).
+// Configure<T> ╫º╫ץ╫⌐╫¿ ╫º╫ר╫ó ╫פ╫ע╫ף╫¿╫ץ╫¬ ╫₧-appsettings ╫£-JwtSettings (Key, Issuer, Audience...).
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 
 
 
-// ===== שלב 4: רישום שכבת BL (Singleton) =====
+// ===== ╫⌐╫£╫ס 4: ╫¿╫ש╫⌐╫ץ╫¥ ╫⌐╫¢╫ס╫¬ BL (Singleton) =====
 
-// Singleton = מופע אחד לכל חיי האפליקציה. מתאים למנועים stateless.
+// Singleton = ╫₧╫ץ╫ñ╫ó ╫נ╫ק╫ף ╫£╫¢╫£ ╫ק╫ש╫ש ╫פ╫נ╫ñ╫£╫ש╫º╫ª╫ש╫פ. ╫₧╫¬╫נ╫ש╫¥ ╫£╫₧╫á╫ץ╫ó╫ש╫¥ stateless.
 
-// AlgorithmSettingsRegistration קורא את קטע "Algorithm" מהגדרות.
+// AlgorithmSettingsRegistration ╫º╫ץ╫¿╫נ ╫נ╫¬ ╫º╫ר╫ó "Algorithm" ╫₧╫פ╫ע╫ף╫¿╫ץ╫¬.
 
 builder.Services.AddSingleton(AlgorithmSettingsRegistration.BindFromConfiguration(builder.Configuration));
 
 
 
-// IAssignmentValidator הוא ממשק Core; ConstraintEngine הוא המימוש ב-BL.
+// IAssignmentValidator ╫פ╫ץ╫נ ╫₧╫₧╫⌐╫º Core; ConstraintEngine ╫פ╫ץ╫נ ╫פ╫₧╫ש╫₧╫ץ╫⌐ ╫ס-BL.
 
-// כך האלגוריתם מאמת אילוצים דרך ממשק אחיד — לא ישירות מול API.
+// ╫¢╫ת ╫פ╫נ╫£╫ע╫ץ╫¿╫ש╫¬╫¥ ╫₧╫נ╫₧╫¬ ╫נ╫ש╫£╫ץ╫ª╫ש╫¥ ╫ף╫¿╫ת ╫₧╫₧╫⌐╫º ╫נ╫ק╫ש╫ף Γאפ ╫£╫נ ╫ש╫⌐╫ש╫¿╫ץ╫¬ ╫₧╫ץ╫£ API.
 
 builder.Services.AddSingleton<IAssignmentValidator, ConstraintEngine>();
 
+// IAssignmentScorer — מימוש ScoringManager; נדרש ל-MoveEvaluator ול-Local Search עתידי.
+
+builder.Services.AddSingleton<IAssignmentScorer, ScoringManager>();
+
+// Local Search — הערכת מועמדי move (לא מתזמר / לא SearchStrategy).
+
+builder.Services.AddSingleton<IMoveEvaluator, MoveEvaluator>();
 
 
-// InitialPlacementOrchestrator מתזמר את תהליך החלוקה הראשונית ב-BL.
+
+// InitialPlacementOrchestrator ╫₧╫¬╫צ╫₧╫¿ ╫נ╫¬ ╫¬╫פ╫£╫ש╫ת ╫פ╫ק╫£╫ץ╫º╫פ ╫פ╫¿╫נ╫⌐╫ץ╫á╫ש╫¬ ╫ס-BL.
 
 builder.Services.AddSingleton<InitialPlacementOrchestrator>();
 
 
 
-// ===== שלב 5: הגדרת JWT Bearer =====
+// ===== ╫⌐╫£╫ס 5: ╫פ╫ע╫ף╫¿╫¬ JWT Bearer =====
 
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
 
@@ -162,25 +174,25 @@ builder.Services
 
     {
 
-        // TokenValidationParameters מגדיר מה לבדוק בכל בקשה עם כותרת Authorization: Bearer ...
+        // TokenValidationParameters ╫₧╫ע╫ף╫ש╫¿ ╫₧╫פ ╫£╫ס╫ף╫ץ╫º ╫ס╫¢╫£ ╫ס╫º╫⌐╫פ ╫ó╫¥ ╫¢╫ץ╫¬╫¿╫¬ Authorization: Bearer ...
 
         options.TokenValidationParameters = new TokenValidationParameters
 
         {
 
-            ValidateIssuer = true,           // מי הנפיק את הטוקן
+            ValidateIssuer = true,           // ╫₧╫ש ╫פ╫á╫ñ╫ש╫º ╫נ╫¬ ╫פ╫ר╫ץ╫º╫ƒ
 
-            ValidateAudience = true,         // למי הטוקן מיועד (הלקוח)
+            ValidateAudience = true,         // ╫£╫₧╫ש ╫פ╫ר╫ץ╫º╫ƒ ╫₧╫ש╫ץ╫ó╫ף (╫פ╫£╫º╫ץ╫ק)
 
-            ValidateLifetime = true,         // האם פג תוקף
+            ValidateLifetime = true,         // ╫פ╫נ╫¥ ╫ñ╫ע ╫¬╫ץ╫º╫ú
 
-            ValidateIssuerSigningKey = true, // האם החתימה תקינה
+            ValidateIssuerSigningKey = true, // ╫פ╫נ╫¥ ╫פ╫ק╫¬╫ש╫₧╫פ ╫¬╫º╫ש╫á╫פ
 
             ValidIssuer = jwtSettings.Issuer,
 
             ValidAudience = jwtSettings.Audience,
 
-            // SymmetricSecurityKey — מפתח סודי משותף לחתימה ולאימות (HMAC).
+            // SymmetricSecurityKey Γאפ ╫₧╫ñ╫¬╫ק ╫í╫ץ╫ף╫ש ╫₧╫⌐╫ץ╫¬╫ú ╫£╫ק╫¬╫ש╫₧╫פ ╫ץ╫£╫נ╫ש╫₧╫ץ╫¬ (HMAC).
 
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
 
@@ -190,7 +202,7 @@ builder.Services
 
 
 
-// AddAuthorization מאפשר שימוש ב-[Authorize] על בקרים.
+// AddAuthorization ╫₧╫נ╫ñ╫⌐╫¿ ╫⌐╫ש╫₧╫ץ╫⌐ ╫ס-[Authorize] ╫ó╫£ ╫ס╫º╫¿╫ש╫¥.
 
 builder.Services.AddAuthorization();
 
@@ -204,13 +216,13 @@ builder.Services.AddSwaggerGen();
 
 
 
-// ===== שלב 6: CORS =====
+// ===== ╫⌐╫£╫ס 6: CORS =====
 
-// CORS (Cross-Origin Resource Sharing) — מאפשר ללקוח React (פורט 5173/5174)
+// CORS (Cross-Origin Resource Sharing) Γאפ ╫₧╫נ╫ñ╫⌐╫¿ ╫£╫£╫º╫ץ╫ק React (╫ñ╫ץ╫¿╫ר 5173/5174)
 
-// לשלוח בקשות ל-API (פורט 5256) מהדפדפן.
+// ╫£╫⌐╫£╫ץ╫ק ╫ס╫º╫⌐╫ץ╫¬ ╫£-API (╫ñ╫ץ╫¿╫ר 5256) ╫₧╫פ╫ף╫ñ╫ף╫ñ╫ƒ.
 
-// WithoutOrigins — רק כתובות localhost מפורשות מורשות (לא "*" ב-production).
+// WithoutOrigins Γאפ ╫¿╫º ╫¢╫¬╫ץ╫ס╫ץ╫¬ localhost ╫₧╫ñ╫ץ╫¿╫⌐╫ץ╫¬ ╫₧╫ץ╫¿╫⌐╫ץ╫¬ (╫£╫נ "*" ╫ס-production).
 
 builder.Services.AddCors(options =>
 
@@ -230,7 +242,7 @@ builder.Services.AddCors(options =>
 
                 "https://localhost:5174")
 
-            .AllowAnyHeader()   // מאפשר כותרת Authorization
+            .AllowAnyHeader()   // ╫₧╫נ╫ñ╫⌐╫¿ ╫¢╫ץ╫¬╫¿╫¬ Authorization
 
             .AllowAnyMethod();  // GET, POST, PUT, DELETE...
 
@@ -240,19 +252,19 @@ builder.Services.AddCors(options =>
 
 
 
-// Build() סוגר את שלב הרישום ויוצר WebApplication מוכן להרצה.
+// Build() ╫í╫ץ╫ע╫¿ ╫נ╫¬ ╫⌐╫£╫ס ╫פ╫¿╫ש╫⌐╫ץ╫¥ ╫ץ╫ש╫ץ╫ª╫¿ WebApplication ╫₧╫ץ╫¢╫ƒ ╫£╫פ╫¿╫ª╫פ.
 
 var app = builder.Build();
 
 
 
-// ===== שלב 7: אתחול Development בלבד =====
+// ===== ╫⌐╫£╫ס 7: ╫נ╫¬╫ק╫ץ╫£ Development ╫ס╫£╫ס╫ף =====
 
 if (app.Environment.IsDevelopment())
 
 {
 
-    // CreateScope יוצר Scope DI זמני — DbContext חי רק בתוך הבלוק.
+    // CreateScope ╫ש╫ץ╫ª╫¿ Scope DI ╫צ╫₧╫á╫ש Γאפ DbContext ╫ק╫ש ╫¿╫º ╫ס╫¬╫ץ╫ת ╫פ╫ס╫£╫ץ╫º.
 
     using (var scope = app.Services.CreateScope())
 
@@ -260,11 +272,11 @@ if (app.Environment.IsDevelopment())
 
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        // Migrate() מריץ מיגרציות EF שלא הוחלו עדיין.
+        // Migrate() ╫₧╫¿╫ש╫Ñ ╫₧╫ש╫ע╫¿╫ª╫ש╫ץ╫¬ EF ╫⌐╫£╫נ ╫פ╫ץ╫ק╫£╫ץ ╫ó╫ף╫ש╫ש╫ƒ.
 
         db.Database.Migrate();
 
-        // SeedAsync טוען נתוני דמו (מנהל, משתתפים לדוגמה) אם המסד ריק.
+        // SeedAsync ╫ר╫ץ╫ó╫ƒ ╫á╫¬╫ץ╫á╫ש ╫ף╫₧╫ץ (╫₧╫á╫פ╫£, ╫₧╫⌐╫¬╫¬╫ñ╫ש╫¥ ╫£╫ף╫ץ╫ע╫₧╫פ) ╫נ╫¥ ╫פ╫₧╫í╫ף ╫¿╫ש╫º.
 
         await DevelopmentDataSeeder.SeedAsync(db);
 
@@ -280,21 +292,21 @@ if (app.Environment.IsDevelopment())
 
 
 
-// ===== שלב 8: Middleware pipeline =====
+// ===== ╫⌐╫£╫ס 8: Middleware pipeline =====
 
-// הסדר חשוב: CORS לפני Auth, Auth לפני MapControllers.
+// ╫פ╫í╫ף╫¿ ╫ק╫⌐╫ץ╫ס: CORS ╫£╫ñ╫á╫ש Auth, Auth ╫£╫ñ╫á╫ש MapControllers.
 
-app.UseHttpsRedirection(); // מפנה HTTP→HTTPS כשמוגדר
+app.UseHttpsRedirection(); // ╫₧╫ñ╫á╫פ HTTPΓזעHTTPS ╫¢╫⌐╫₧╫ץ╫ע╫ף╫¿
 
 app.UseCors();
 
-app.UseAuthentication();   // קורא Bearer token וממלא HttpContext.User
+app.UseAuthentication();   // ╫º╫ץ╫¿╫נ Bearer token ╫ץ╫₧╫₧╫£╫נ HttpContext.User
 
-app.UseAuthorization();    // בודק [Authorize]
+app.UseAuthorization();    // ╫ס╫ץ╫ף╫º [Authorize]
 
 
 
-// MapControllers מחבר את כל הבקרים (Controllers) לנתיבי URL.
+// MapControllers ╫₧╫ק╫ס╫¿ ╫נ╫¬ ╫¢╫£ ╫פ╫ס╫º╫¿╫ש╫¥ (Controllers) ╫£╫á╫¬╫ש╫ס╫ש URL.
 
 app.MapControllers();
 
