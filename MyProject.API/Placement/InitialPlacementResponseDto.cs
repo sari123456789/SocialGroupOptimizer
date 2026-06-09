@@ -1,3 +1,4 @@
+using MyProject.Core.Domain.Entities;
 using MyProject.BL.Algorithm.InitialPlacement.Results;
 
 namespace MyProject.API.Placement;
@@ -10,7 +11,15 @@ public sealed class InitialPlacementResponseDto
 
     public List<string> Errors { get; set; } = new();
 
-    public static InitialPlacementResponseDto FromResult(InitialPlacementResult result)
+    public static InitialPlacementResponseDto FromResult(InitialPlacementResult result) =>
+        FromResult(result, result.Assignment);
+
+    /// <summary>
+    /// בונה DTO — status/errors מ-result, קבוצות מ-assignmentOverride אם קיים.
+    /// </summary>
+    public static InitialPlacementResponseDto FromResult(
+        InitialPlacementResult result,
+        Assignment? assignmentOverride)
     {
         var response = new InitialPlacementResponseDto
         {
@@ -18,12 +27,13 @@ public sealed class InitialPlacementResponseDto
             Errors = result.Errors.ToList(),
         };
 
-        if (result.Assignment is null)
+        var assignment = assignmentOverride ?? result.Assignment;
+        if (assignment is null)
         {
             return response;
         }
 
-        response.Groups = result.Assignment.Groups
+        response.Groups = assignment.Groups
             .OrderBy(group => group.Id.Value)
             .Select(group => new PlacementGroupDto
             {

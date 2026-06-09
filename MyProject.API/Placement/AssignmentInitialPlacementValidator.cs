@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using MyProject.BL.Algorithm.InitialPlacement.Orchestration;
 using MyProject.BL.Algorithm.InitialPlacement.Results;
 using MyProject.Data;
 using MyProject.Data.Models;
@@ -16,7 +15,7 @@ namespace MyProject.API.Placement;
 ///   <item><description>בדיקה שהחלוקה שייכת למנהל</description></item>
 ///   <item><description>מריץ אימות גם בלי אילוצי סיווג (קבוצות + זוגות מספיקים)</description></item>
 ///   <item><description>טעינת קלט דרך AssignmentPlacementLoader</description></item>
-///   <item><description>הרצת InitialPlacementOrchestrator.Run</description></item>
+///   <item><description>הרצת AssignmentPlacementRunner.RunAndImprove</description></item>
 ///   <item><description>שמירת סטטוס, שגיאות וקבוצות ב-Assignment</description></item>
 /// </list>
 /// </remarks>
@@ -24,16 +23,16 @@ public sealed class AssignmentInitialPlacementValidator
 {
     private readonly ApplicationDbContext _db;
     private readonly AssignmentPlacementLoader _loader;
-    private readonly InitialPlacementOrchestrator _orchestrator;
+    private readonly AssignmentPlacementRunner _placementRunner;
 
     public AssignmentInitialPlacementValidator(
         ApplicationDbContext db,
         AssignmentPlacementLoader loader,
-        InitialPlacementOrchestrator orchestrator)
+        AssignmentPlacementRunner placementRunner)
     {
         _db = db ?? throw new ArgumentNullException(nameof(db));
         _loader = loader ?? throw new ArgumentNullException(nameof(loader));
-        _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
+        _placementRunner = placementRunner ?? throw new ArgumentNullException(nameof(placementRunner));
     }
 
     public async Task ValidateAsync(
@@ -68,8 +67,8 @@ public sealed class AssignmentInitialPlacementValidator
         {
             // LoadInputAsync — DB → InitialPlacementInput (Core + BL).
             var input = await _loader.LoadInputAsync(assignmentId, managerId, cancellationToken);
-            var result = _orchestrator.Run(input);
-            ApplyResult(assignment, result);
+            var runResult = _placementRunner.RunAndImprove(input);
+            ApplyResult(assignment, runResult);
         }
         catch (ArgumentException ex)
         {
@@ -83,19 +82,26 @@ public sealed class AssignmentInitialPlacementValidator
         await _db.SaveChangesAsync(cancellationToken);
     }
 
-    private static void ApplyResult(Assignment assignment, InitialPlacementResult result)
+    private static void ApplyResult(Data.Models.Assignment assignment, AssignmentPlacementRunResult runResult)
     {
+        var result = runResult.PlacementResult;
+
         assignment.LastValidatedAtUtc = DateTime.UtcNow;
         assignment.LastPlacementStatus = result.Status.ToString();
-        // ForDisplay — מתרגם שגיאות טכnicas להודעות בעברית למשתמש.
-        assignment.LastValidationErrors = SerializeErrors(InitialPlacementUserMessages.ForDisplay(result));
 
-        // pattern matching: is Success or SuccessViaSolver — C# 9+.
+        var displayErrors = InitialPlacementUserMessages.ForDisplay(result).ToList();
+        if (!string.IsNullOrWhiteSpace(runResult.Warning))
+        {
+            displayErrors.Add(runResult.Warning);
+        }
+
+        assignment.LastValidationErrors = SerializeErrors(displayErrors);
+
         if (result.Status is InitialPlacementStatus.Success or InitialPlacementStatus.SuccessViaSolver
-            && result.Assignment is not null)
+            && runResult.FinalAssignment is not null)
         {
             assignment.ValidationStatus = "Validated";
-            assignment.LastPlacementGroupsJson = SerializeGroups(result);
+            assignment.LastPlacementGroupsJson = PlacementGroupSerialization.SerializeGroups(runResult.FinalAssignment);
             return;
         }
 
@@ -103,7 +109,7 @@ public sealed class AssignmentInitialPlacementValidator
         assignment.LastPlacementGroupsJson = null;
     }
 
-    private static void ApplyFailure(Assignment assignment, string error)
+    private static void ApplyFailure(Data.Models.Assignment assignment, string error)
     {
         assignment.LastValidatedAtUtc = DateTime.UtcNow;
         assignment.ValidationStatus = "ValidationFailed";
@@ -112,7 +118,7 @@ public sealed class AssignmentInitialPlacementValidator
         assignment.LastPlacementGroupsJson = null;
     }
 
-    private static void ApplyPending(Assignment assignment)
+    private static void ApplyPending(Data.Models.Assignment assignment)
     {
         assignment.ValidationStatus = "PendingValidation";
         assignment.LastPlacementStatus = null;
@@ -131,27 +137,4 @@ public sealed class AssignmentInitialPlacementValidator
         return JsonSerializer.Serialize(errors);
     }
 
-    private static string SerializeGroups(InitialPlacementResult result)
-    {
-        var groups = result.Assignment!.Groups
-            .OrderBy(group => group.Id.Value)
-            .Select(group => new StoredPlacementGroup
-            {
-                GroupId = group.Id.Value,
-                ParticipantIds = group.ParticipantIds
-                    .Select(participantId => participantId.Value)
-                    .ToList(),
-            })
-            .ToList();
-
-        return JsonSerializer.Serialize(groups);
-    }
-
-    // מחלקה פנימית — מבנה JSON לשמירה במסד (לא DTO ללקוח).
-    private sealed class StoredPlacementGroup
-    {
-        public int GroupId { get; set; }
-
-        public List<string> ParticipantIds { get; set; } = new();
-    }
 }

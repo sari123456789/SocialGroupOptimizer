@@ -12,15 +12,13 @@ using Microsoft.AspNetCore.Mvc;
 using MyProject.API.Auth;
 using MyProject.API.Placement;
 using MyProject.API.Placement.Excel;
-using MyProject.BL.Algorithm.InitialPlacement.Orchestration;
-
 namespace MyProject.API.Controllers;
 
 [ApiController]
 [Route("api/placement")]
 public sealed class InitialPlacementController : ControllerBase
 {
-    private readonly InitialPlacementOrchestrator _orchestrator;
+    private readonly AssignmentPlacementRunner _placementRunner;
     private readonly AssignmentPlacementLoader _loader;
     private readonly AssignmentInitialPlacementValidator _placementValidator;
     private readonly AssignmentDetailLoader _detailLoader;
@@ -29,7 +27,7 @@ public sealed class InitialPlacementController : ControllerBase
     private readonly ParticipantsExcelToInitialPlacementMapper _excelMapper;
 
     public InitialPlacementController(
-        InitialPlacementOrchestrator orchestrator,
+        AssignmentPlacementRunner placementRunner,
         AssignmentPlacementLoader loader,
         AssignmentInitialPlacementValidator placementValidator,
         AssignmentDetailLoader detailLoader,
@@ -37,7 +35,7 @@ public sealed class InitialPlacementController : ControllerBase
         ParticipantsExcelValidator excelValidator,
         ParticipantsExcelToInitialPlacementMapper excelMapper)
     {
-        _orchestrator = orchestrator ?? throw new ArgumentNullException(nameof(orchestrator));
+        _placementRunner = placementRunner ?? throw new ArgumentNullException(nameof(placementRunner));
         _loader = loader ?? throw new ArgumentNullException(nameof(loader));
         _placementValidator = placementValidator ?? throw new ArgumentNullException(nameof(placementValidator));
         _detailLoader = detailLoader ?? throw new ArgumentNullException(nameof(detailLoader));
@@ -66,8 +64,17 @@ public sealed class InitialPlacementController : ControllerBase
         try
         {
             var input = InitialPlacementDtoMapper.ToInput(request);
-            var result = _orchestrator.Run(input);
-            return Ok(InitialPlacementResponseDto.FromResult(result));
+            var runResult = _placementRunner.RunAndImprove(input);
+            var response = InitialPlacementResponseDto.FromResult(
+                runResult.PlacementResult,
+                runResult.FinalAssignment ?? runResult.PlacementResult.Assignment);
+
+            if (!string.IsNullOrWhiteSpace(runResult.Warning))
+            {
+                response.Errors.Add(runResult.Warning);
+            }
+
+            return Ok(response);
         }
         catch (ArgumentException ex)
         {
@@ -221,8 +228,17 @@ public sealed class InitialPlacementController : ControllerBase
                 });
             }
 
-            var result = _orchestrator.Run(mappingResult.Input);
-            return Ok(InitialPlacementResponseDto.FromResult(result));
+            var runResult = _placementRunner.RunAndImprove(mappingResult.Input);
+            var response = InitialPlacementResponseDto.FromResult(
+                runResult.PlacementResult,
+                runResult.FinalAssignment ?? runResult.PlacementResult.Assignment);
+
+            if (!string.IsNullOrWhiteSpace(runResult.Warning))
+            {
+                response.Errors.Add(runResult.Warning);
+            }
+
+            return Ok(response);
         }
         catch (ArgumentException ex)
         {

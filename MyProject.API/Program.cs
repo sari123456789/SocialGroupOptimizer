@@ -40,6 +40,8 @@ using MyProject.API.Placement;
 
 using MyProject.API.Placement.Excel;
 
+using MyProject.BL.Algorithm.Improvement;
+
 using MyProject.BL.Algorithm.InitialPlacement.Orchestration;
 
 using MyProject.BL.Algorithm.LocalSearch.Engine;
@@ -92,6 +94,8 @@ builder.Services.AddApplicationPersistence(connectionString);
 // Scoped = מופע חדש לכל בקשת HTTP. מתאים לשירותים שמשתמשים ב-DbContext.
 
 builder.Services.AddScoped<AssignmentPlacementLoader>();
+
+builder.Services.AddScoped<AssignmentPlacementRunner>();
 
 builder.Services.AddScoped<AssignmentParticipantsLoader>();
 
@@ -171,6 +175,10 @@ builder.Services.AddSingleton<IMoveCandidateStrategy, ControlledRandomStrategy>(
 builder.Services.AddSingleton<MoveGenerationPolicy>();
 builder.Services.AddSingleton<SwapMoveGenerator>();
 builder.Services.AddSingleton<ILocalSearchEngine, LocalSearchEngine>();
+
+builder.Services.AddSingleton(_ => new ScoringWeights());
+
+builder.Services.AddSingleton<IAssignmentImprovementOrchestrator, AssignmentImprovementOrchestrator>();
 
 
 

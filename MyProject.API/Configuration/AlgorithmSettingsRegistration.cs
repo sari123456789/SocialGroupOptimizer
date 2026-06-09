@@ -30,6 +30,9 @@ internal static class AlgorithmSettingsRegistration
                 AlgorithmSettings.DefaultLightStagnationThreshold),
             section.GetValue(
                 nameof(AlgorithmSettings.HeavyStagnationThreshold),
-                AlgorithmSettings.DefaultHeavyStagnationThreshold));
+                AlgorithmSettings.DefaultHeavyStagnationThreshold),
+            section.GetValue(
+                nameof(AlgorithmSettings.EnableLocalSearch),
+                AlgorithmSettings.DefaultEnableLocalSearch));
     }
 }

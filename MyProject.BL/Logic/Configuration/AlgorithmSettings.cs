@@ -73,6 +73,11 @@ public sealed class AlgorithmSettings
     public const int DefaultHeavyStagnationThreshold = 15;
 
     /// <summary>
+    /// ברירת מחדל — להפעיל חיפוש מקומי אחרי חלוקה ראשונית.
+    /// </summary>
+    public const bool DefaultEnableLocalSearch = true;
+
+    /// <summary>
     /// מאתחל עם כל ערכי ברירת המחדל.
     /// </summary>
     public AlgorithmSettings()
@@ -88,7 +93,8 @@ public sealed class AlgorithmSettings
             DefaultHighIsolationRatioThreshold,
             DefaultHighWeakGroupRatioThreshold,
             DefaultLightStagnationThreshold,
-            DefaultHeavyStagnationThreshold)
+            DefaultHeavyStagnationThreshold,
+            DefaultEnableLocalSearch)
     {
     }
 
@@ -108,7 +114,8 @@ public sealed class AlgorithmSettings
             DefaultHighIsolationRatioThreshold,
             DefaultHighWeakGroupRatioThreshold,
             DefaultLightStagnationThreshold,
-            DefaultHeavyStagnationThreshold)
+            DefaultHeavyStagnationThreshold,
+            DefaultEnableLocalSearch)
     {
     }
 
@@ -127,7 +134,8 @@ public sealed class AlgorithmSettings
         double highIsolationRatioThreshold = DefaultHighIsolationRatioThreshold,
         double highWeakGroupRatioThreshold = DefaultHighWeakGroupRatioThreshold,
         int lightStagnationThreshold = DefaultLightStagnationThreshold,
-        int heavyStagnationThreshold = DefaultHeavyStagnationThreshold)
+        int heavyStagnationThreshold = DefaultHeavyStagnationThreshold,
+        bool enableLocalSearch = DefaultEnableLocalSearch)
     {
         if (maxIterations <= 0)
         {
@@ -218,6 +226,7 @@ public sealed class AlgorithmSettings
         HighWeakGroupRatioThreshold = highWeakGroupRatioThreshold;
         LightStagnationThreshold = lightStagnationThreshold;
         HeavyStagnationThreshold = heavyStagnationThreshold;
+        EnableLocalSearch = enableLocalSearch;
     }
 
     /// <summary>
@@ -279,6 +288,11 @@ public sealed class AlgorithmSettings
     /// קיפאון כבד — איטרציות ללא שיפור; מפעיל ControlledRandom.
     /// </summary>
     public int HeavyStagnationThreshold { get; }
+
+    /// <summary>
+    /// האם להריץ חיפוש מקומי לשיפור חלוקה אחרי Initial Placement.
+    /// </summary>
+    public bool EnableLocalSearch { get; }
 
     /// <summary>
     /// מחשב סטייה מקסימלית בקנה מידה לפי מספר משתתפים ואחוז סובלנות.
