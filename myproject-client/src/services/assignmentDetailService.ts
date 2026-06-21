@@ -32,6 +32,8 @@ export interface AssignmentDetail {
   lastPlacementStatus?: string | null
   validationErrors: string[]
   placementGroups: PlacementGroup[]
+  placementScore?: number | null
+  initialPlacementScore?: number | null
   settings: AssignmentSettings
   participants: ParticipantListItem[]
   mandatoryPairs: PairConstraintItem[]
@@ -99,6 +101,7 @@ export async function addParticipant(
     participantId: string
     displayName?: string
     classifications: Record<string, string>
+    preferences?: string[]
   },
 ): Promise<AssignmentDetail | AssignmentEditError> {
   const response = await authFetch(`/api/assignments/${assignmentId}/participants`, {
@@ -116,6 +119,7 @@ export async function updateParticipant(
   payload: {
     displayName?: string
     classifications?: Record<string, string>
+    preferences?: string[]
   },
 ): Promise<AssignmentDetail | AssignmentEditError> {
   const response = await authFetch(

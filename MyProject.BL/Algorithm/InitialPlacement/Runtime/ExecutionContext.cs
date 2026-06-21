@@ -18,7 +18,6 @@ public sealed record ExecutionContext
     /// <remarks>נקרא מ- <see cref="ExecutionContextFactory.Create"/>, API loaders.</remarks>
     public ExecutionContext(AlgorithmRunId runId, int runSeed)
     {
-        // record עם init בלבד — שדות immutable לכל ריצה.
         RunId = runId;
         RunSeed = runSeed;
     }
@@ -32,6 +31,5 @@ public sealed record ExecutionContext
     /// <summary>
     /// תפקיד: seed לשחזור התנהגות — לשימוש עתידי באקראיות.
     /// </summary>
-    /// <remarks>נשמר ב-InitialPlacementInput; אין שימוש פעיל באלגוריתם כרגע.</remarks>
     public int RunSeed { get; }
 }

@@ -29,10 +29,15 @@ public static class InitialPlacementUserMessages
         // כשל infeasible/תשתית — מוסיפים סיכום + פרטים מתורגמים.
         if (ShouldShowInfeasibleSummary(result))
         {
+            if (result.Errors.Any(error => string.Equals(error, InfeasibleAssignment, StringComparison.Ordinal)))
+            {
+                return NormalizeDisplayMessages(result.Errors);
+            }
+
             return MergeInfeasibleSummary(result.Errors);
         }
 
-        return result.Errors;
+        return NormalizeDisplayMessages(result.Errors);
     }
 
     /// <summary>
@@ -53,6 +58,11 @@ public static class InitialPlacementUserMessages
     public static IReadOnlyList<string> InfeasibleWithDetails(IReadOnlyList<string>? detailErrors) =>
         MergeInfeasibleSummary(detailErrors ?? Array.Empty<string>());
 
+    /// <summary>
+    /// תפקיד: בודק האם יש להציג סיכום Infeasible למשתמש — סטטוס כשל חלוקה או שגיאות פותר שמצביעות על infeasible.
+    /// </summary>
+    /// <param name="result"></param>
+    /// <returns></returns>
     private static bool ShouldShowInfeasibleSummary(InitialPlacementResult result) =>
         // סטטוסים שמצביעים על כשל חלוקה (לא הצלחה).
         result.Status is InitialPlacementStatus.InfeasiblePreCheck
@@ -67,23 +77,31 @@ public static class InitialPlacementUserMessages
             || IsSolverInfrastructureFailure(result.Errors)
             || IsSolverInfeasible(result.Errors));
 
+    /// <summary>
+    /// תפקיד: מזהה אם השגיאות מצביעות על כשל פותר infeasible ולא על שגיאת תשתית.
+    /// </summary>
+    /// <param name="errors"></param>
+    /// <returns></returns>
     private static bool IsSolverInfeasible(IReadOnlyList<string> errors) =>
         errors.Any(error =>
             error.Contains("infeasible", StringComparison.OrdinalIgnoreCase)
             || error.Contains("לא ניתן", StringComparison.Ordinal));
 
+    /// <summary>
+    /// תפקיד: בונה רשימת הודעות להצגה למשתמש — מוסיף סיכום Infeasible + פרטים מתורגמים + רמז אם אין פרטים.
+    /// </summary>
+    /// <param name="detailErrors"></param>
+    /// <returns></returns>
     private static IReadOnlyList<string> MergeInfeasibleSummary(IReadOnlyList<string> detailErrors)
     {
-        var messages = new List<string> { InfeasibleAssignment };
+        var messages = new List<string>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        TryAddCanonical(messages, seen, InfeasibleAssignment, includeSummary: true);
 
         foreach (var error in detailErrors)
         {
-            var translated = InfeasibilityExplanationBuilder.TranslatePublic(error);
-            // מסננים רעש תשתיתי ושגיאות פנימיות שלא רלוונטיות למשתמש.
-            if (ShouldIncludeDetail(translated))
-            {
-                messages.Add(translated);
-            }
+            TryAddCanonical(messages, seen, error);
         }
 
         // אם נשאר רק הסיכום — מוסיפים רמז כללי.
@@ -93,16 +111,134 @@ public static class InitialPlacementUserMessages
                 "לא אותרה סיבה מפורטת נוספת. נסו להסיר אילוצים, לבדוק זוגות חובה/איסור, או לשנות את אילוצי האיזון.");
         }
 
-        return messages;
+        return RemoveEnglishWhenHebrewEquivalentExists(messages);
     }
 
-    private static bool ShouldIncludeDetail(string error) =>
-        !string.IsNullOrWhiteSpace(error)
-        && !string.Equals(error, InfeasibleAssignment, StringComparison.Ordinal)
-        && !IsInfrastructureError(error)
-        && !error.Contains("No legal unit-level move", StringComparison.OrdinalIgnoreCase)
-        && !error.Contains("External solver", StringComparison.OrdinalIgnoreCase);
+    /// <summary>
+    /// תפקיד: מסנן כפילויות, מסנן שגיאות תשתית ושגיאות גולמיות, מתרגם הודעות לאנגלית/עברית ומסיר הודעות באנגלית אם קיימת מקבילה בעברית.
+    /// </summary>
+    /// <param name="messages"></param>
+    /// <returns></returns>
+    private static IReadOnlyList<string> NormalizeDisplayMessages(IReadOnlyList<string> messages)
+    {
+        var normalized = new List<string>();
+        var seen = new HashSet<string>(StringComparer.Ordinal);
 
+        foreach (var message in messages)
+        {
+            TryAddCanonical(normalized, seen, message, includeSummary: true);
+        }
+
+        return RemoveEnglishWhenHebrewEquivalentExists(normalized);
+    }
+
+    /// <summary>
+    /// תפקיד: מסיר הודעות באנגלית אם קיים מקבילה בעברית — מניח שהמשתמש יעדיף לראות רק את ההודעה בעברית אם שניהם קיימים.
+    /// </summary>
+    /// <param name="messages"></param>
+    /// <returns></returns>
+    private static IReadOnlyList<string> RemoveEnglishWhenHebrewEquivalentExists(
+        IReadOnlyList<string> messages)
+    {
+        var hebrewMessages = new HashSet<string>(
+            messages.Where(ContainsHebrew),
+            StringComparer.Ordinal);
+
+        return messages
+            .Where(message =>
+                ContainsHebrew(message)
+                || !hebrewMessages.Contains(InfeasibilityExplanationBuilder.TranslatePublic(message)))
+            .ToList();
+    }
+
+    /// <summary>
+    /// תפקיד: מזהה אם מחרוזת מכילה תווים בעברית (Unicode U+0590 עד U+05FF).
+    /// </summary>
+    /// <param name="message"></param>
+    /// <returns></returns>
+    private static bool ContainsHebrew(string message) =>
+        message.Any(static ch => ch is >= '\u0590' and <= '\u05FF');
+
+    /// <summary>
+    /// תפקיד: מוסיף הודעה לרשימה אם היא ראויה להצגה למשתמש — מסנן כפילויות, שגיאות תשתית ושגיאות גולמיות.
+    /// </summary>
+    /// <param name="messages"></param>
+    /// <param name="seen"></param>
+    /// <param name="message"></param>
+    /// <param name="includeSummary"></param>
+    private static void TryAddCanonical(
+        ICollection<string> messages,
+        ISet<string> seen,
+        string? message,
+        bool includeSummary = false)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        var canonical = InfeasibilityExplanationBuilder.TranslatePublic(message);
+        if (!ContainsHebrew(message)
+            && !string.Equals(message, canonical, StringComparison.Ordinal))
+        {
+            message = canonical;
+        }
+
+        var isSummary = string.Equals(canonical, InfeasibleAssignment, StringComparison.Ordinal);
+
+        if (isSummary)
+        {
+            if (!includeSummary || !seen.Add(canonical))
+            {
+                return;
+            }
+
+            messages.Add(canonical);
+            return;
+        }
+
+        if (!ShouldIncludeDetail(canonical) || !seen.Add(canonical))
+        {
+            return;
+        }
+
+        messages.Add(canonical);
+    }
+
+    /// <summary>
+    /// תפקיד: בודק האם שגיאה מפורטת ראויה להצגה למשתמש — מסנן שגיאות תשתית/שגיאות פותר גולמיות.
+    /// </summary>
+    /// <param name="error"></param>
+    /// <returns></returns>
+    private static bool ShouldIncludeDetail(string error)
+    {
+        if (string.IsNullOrWhiteSpace(error)
+            || string.Equals(error, InfeasibleAssignment, StringComparison.Ordinal)
+            || IsInfrastructureError(error)
+            || error.Contains("No legal unit-level move", StringComparison.OrdinalIgnoreCase)
+            || error.Contains("External solver", StringComparison.OrdinalIgnoreCase)
+            || error.Contains("Solver reported infeasible problem", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (!ContainsHebrew(error))
+        {
+            var translated = InfeasibilityExplanationBuilder.TranslatePublic(error);
+            if (!string.Equals(error, translated, StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// תפקיד: מזהה שגיאות תשתית (תקשורת/timeout) שמופיעות בשגיאות הפותר.
+    /// </summary>
+    /// <param name="error"></param>
+    /// <returns></returns>
     private static bool IsInfrastructureError(string error) =>
         error.Contains("communication failed", StringComparison.OrdinalIgnoreCase)
         || error.Contains("actively refused", StringComparison.OrdinalIgnoreCase)

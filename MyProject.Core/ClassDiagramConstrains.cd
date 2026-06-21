@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.Core.Domain.Constraints.ClassificationDimensionConstraintSupport">
+    <Position X="6.75" Y="0.5" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAAAQAAAA=</HashCode>
+      <FileName>Domain\Constraints\ClassificationDimensionConstraintSupport.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Core.Domain.Constraints.ClassificationHomogeneousGroupConstraint" BaseTypeListCollapsed="true">
+    <Position X="6.75" Y="2" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAEAAAAAAEAAACAAEQAAACAAACA=</HashCode>
+      <FileName>Domain\Constraints\ClassificationHomogeneousGroupConstraint.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.Core.Domain.Constraints.ClassificationProportionalBalanceConstraint" BaseTypeListCollapsed="true">
+    <Position X="3.25" Y="0.5" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAEAAAAAAAAAAAEAAAAAAEAAACAAERAAACAAACA=</HashCode>
+      <FileName>Domain\Constraints\ClassificationProportionalBalanceConstraint.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="1.492" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.Core.Domain.Constraints.ForbiddenPairConstraint" BaseTypeListCollapsed="true">
+    <Position X="10.25" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASAAACAAAAA=</HashCode>
+      <FileName>Domain\Constraints\ForbiddenPairConstraint.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.Core.Domain.Constraints.GroupCountConstraint" BaseTypeListCollapsed="true">
+    <Position X="10.25" Y="2.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAQAAACAAAAA=</HashCode>
+      <FileName>Domain\Constraints\GroupCountConstraint.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.Core.Domain.Constraints.GroupSizeConstraint" BaseTypeListCollapsed="true">
+    <Position X="1" Y="4" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAQAAAKAAAAA=</HashCode>
+      <FileName>Domain\Constraints\GroupSizeConstraint.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.Core.Domain.Constraints.MandatoryPairConstraint" BaseTypeListCollapsed="true">
+    <Position X="3.75" Y="4.25" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAASAAACAAAAA=</HashCode>
+      <FileName>Domain\Constraints\MandatoryPairConstraint.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.Core.Domain.Constraints.ParticipantClassificationMap">
+    <Position X="9.25" Y="5.25" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Domain\Constraints\ParticipantClassificationMap.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="MyProject.Core.Domain.Constraints.IConstraint">
+    <Position X="6.75" Y="5.25" Width="1.5" />
+    <Compartments>
+      <Compartment Name="Properties" Collapsed="true" />
+    </Compartments>
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAAACAAAAA=</HashCode>
+      <FileName>Domain\Constraints\IConstraint.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

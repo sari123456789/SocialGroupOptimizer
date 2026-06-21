@@ -27,6 +27,7 @@ public readonly record struct ParticipantId
             throw new ArgumentException("Participant id cannot be empty or whitespace.", nameof(value));
         }
 
+        // תמיד תשע ספרות — כולל אפסים מובילים (לא מנרמלים למספר).
         if (trimmed.Length != 9)
         {
             throw new ArgumentException("Participant id must be exactly 9 digits.", nameof(value));

@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Logic.Constraints.ClassificationHomogeneousGroupValidator">
+    <Position X="9.25" Y="1.75" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Constraints\ClassificationHomogeneousGroupValidator.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Logic.Constraints.ClassificationProportionalBalanceValidator">
+    <Position X="9.25" Y="0.5" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Constraints\ClassificationProportionalBalanceValidator.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Logic.Constraints.ConstraintEngine" BaseTypeListCollapsed="true">
+    <Position X="1.25" Y="0.5" Width="3" />
+    <TypeIdentifier>
+      <HashCode>IAAAAAQAgAAAAAAAAAgBAAAAAACAAAAAEAAAAAAAAgA=</HashCode>
+      <FileName>Logic\Constraints\ConstraintEngine.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="MyProject.BL.Logic.Constraints.ForbiddenPairValidator">
+    <Position X="4.5" Y="2" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Constraints\ForbiddenPairValidator.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Logic.Constraints.GroupCountValidator">
+    <Position X="6.75" Y="3" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Constraints\GroupCountValidator.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Logic.Constraints.GroupSizeValidator">
+    <Position X="4.5" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Constraints\GroupSizeValidator.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Logic.Constraints.MandatoryPairValidator">
+    <Position X="6.75" Y="1.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Logic\Constraints\MandatoryPairValidator.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

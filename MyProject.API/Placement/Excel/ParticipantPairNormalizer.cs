@@ -1,7 +1,9 @@
 namespace MyProject.API.Placement.Excel;
 
+// עוזר לסדר זוגות ת.ז. באותו אופן תמיד
 public static class ParticipantPairNormalizer
 {
+    // מפתח ייחודי לזוג — בלי קשר לסדר
     public static string CreatePairKey(string firstParticipantId, string secondParticipantId)
     {
         if (string.IsNullOrWhiteSpace(firstParticipantId))
@@ -14,11 +16,13 @@ public static class ParticipantPairNormalizer
             throw new ArgumentException("Second participant id is required.", nameof(secondParticipantId));
         }
 
+        // מסדרים אלפביתית ומחברים עם |
         return string.CompareOrdinal(firstParticipantId, secondParticipantId) <= 0
             ? $"{firstParticipantId}|{secondParticipantId}"
             : $"{secondParticipantId}|{firstParticipantId}";
     }
 
+    // מחזיר את הזוג מסודר (קטן קודם)
     public static (string FirstParticipantId, string SecondParticipantId) NormalizePair(
         string firstParticipantId,
         string secondParticipantId)

@@ -34,6 +34,7 @@ internal static class ClassificationDimensionConstraintSupport
         return allowedLevels.Contains(level) ? level : null;
     }
 
+    /// <summary>מעתיק רמות למערך ייחודי ומוודא שיש לפחות רמה אחת.</summary>
     public static HashSet<ClassificationLevelCode> ValidateAndCopyDimensionLevels(
         IEnumerable<ClassificationLevelCode> dimensionLevels,
         string paramName)

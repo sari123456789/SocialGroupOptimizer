@@ -1,5 +1,6 @@
 namespace MyProject.SolverService.Contracts;
 
+/// <summary>תשובת שגיאה — קלט לא תקין או כשל לפני/במהלך פתרון.</summary>
 public sealed class SolverErrorResponse
 {
     public SolverJobStatus Status { get; set; }

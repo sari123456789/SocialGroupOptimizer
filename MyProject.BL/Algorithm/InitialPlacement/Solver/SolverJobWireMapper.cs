@@ -26,8 +26,9 @@ public static class SolverJobWireMapper
         return new SolverJobSubmitWire
         {
             RequestId = Guid.NewGuid(),
-            TimeoutMs = timeoutMs,
-            // Select — ממיר כל DTO פנימי ל-wire מקביל ל-serialization.
+            TimeoutMs = timeoutMs, // מגבלת זמן לריצת הסולבר (במילישניות
+            MinGroups = request.MinGroups, //מינימום קבוצות
+            // ממיר את רשימת המשתתפים הפנימית לרשימת משתתפים wire. מספר זהות וסיווגים לכל משתתף.
             Participants = request.Participants
                 .Select(participant => new SolverParticipantWire
                 {
@@ -37,7 +38,8 @@ public static class SolverJobWireMapper
                         entry => entry.Value),
                 })
                 .ToList(),
-            PlacementUnits = request.PlacementUnits
+            // ממיר את רשימת יחידות ההצבה הפנימית לרשימת יחידות wire. מספר זהות, רשימת משתתפים וסוג היחידה.
+            PlacementUnits = request.PlacementUnits 
                 .Select(unit => new PlacementUnitWire
                 {
                     UnitId = unit.UnitId,
@@ -48,6 +50,7 @@ public static class SolverJobWireMapper
                         : PlacementUnitKindWire.SingleParticipant,
                 })
                 .ToList(),
+            // ממיר את רשימת הקבוצות הפנימית לרשימת קבוצות wire. מספר זהות, גודל מינימום ומקסימום לכל קבוצה.
             Groups = request.Groups
                 .Select(group => new SolverGroupWire
                 {
@@ -56,6 +59,7 @@ public static class SolverJobWireMapper
                     MaxSize = group.MaxSize,
                 })
                 .ToList(),
+            // ממיר את רשימת הזוגות האסורים הפנימית לרשימת זוגות אסורים wire. מספר זהות של כל יחידה בזוג.
             ForbiddenUnitPairs = request.ForbiddenUnitPairs
                 .Select(pair => new ForbiddenUnitPairWire
                 {
@@ -63,6 +67,9 @@ public static class SolverJobWireMapper
                     SecondUnitId = pair.SecondUnitId,
                 })
                 .ToList(),
+            // ממיר את רשימת המגבלות הפנימית לרשימת מגבלות
+            // wire.
+            // סוג המגבלה, מימד היעד, רמת היעד, מספר מינימום ומקסימום לכל קבוצה, רשימת רמות מותרות, סטיית תקן מקסימלית.
             ClassificationConstraints = request.ClassificationConstraints
                 .Select(constraint => new ClassificationConstraintWire
                 {

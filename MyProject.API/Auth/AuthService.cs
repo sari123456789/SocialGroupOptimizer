@@ -1,63 +1,135 @@
+using System.Net.Mail;
 using Microsoft.EntityFrameworkCore;
 using MyProject.Data;
+using MyProject.Data.Models;
 
 namespace MyProject.API.Auth;
 
 /// <summary>
-/// שירות אימות מנהלים: בודק שם וסיסמה מול המסד.
+/// שירות אימות מנהלים: בודק מייל וסיסמה מול המסד.
 /// </summary>
-/// <remarks>
-/// לא מנפיק JWT — רק מחזיר ManagerAuthResult אם האימות הצליח.
-/// JwtTokenService נקרא ב-AuthController לאחר הצלחה.
-/// </remarks>
 public sealed class AuthService
 {
     private readonly ApplicationDbContext _db;
 
     public AuthService(ApplicationDbContext db)
     {
-        // ?? throw — אם db הוא null, עוצרים מיד (Dependency Injection תקין לא אמור להעביר null).
         _db = db ?? throw new ArgumentNullException(nameof(db));
     }
 
-    /// <summary>
-    /// מאמת מנהל לפי שם וסיסמה.
-    /// </summary>
-    /// <returns>ManagerAuthResult אם הצליח; null אם נכשל (לא זורק חריגה — כדי לא לחשוף אם השם קיים).</returns>
     public async Task<ManagerAuthResult?> AuthenticateAsync(
-        string managerName,
+        string email,
         string password,
         CancellationToken cancellationToken = default)
     {
-        // בדיקה מוקדמת — קלט ריק לא שווה "משתמש לא קיים", אבל חוסך שאילתה למסד.
-        if (string.IsNullOrWhiteSpace(managerName) || string.IsNullOrWhiteSpace(password))
+        if (!TryNormalizeEmail(email, out var normalizedEmail) || string.IsNullOrWhiteSpace(password))
         {
             return null;
         }
 
-        // AsNoTracking — קריאה בלבד, בלי מעקב EF (מהיר יותר, לא משנה ישות).
-        // FirstOrDefaultAsync — מחזיר את הרשומה הראשונה או null.
         var manager = await _db.Managers
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                entry => entry.ManagerName == managerName.Trim(),
+                entry => entry.Email == normalizedEmail,
                 cancellationToken);
 
         if (manager is null || string.IsNullOrWhiteSpace(manager.PasswordHash))
         {
-            // null — אותה תשובה כמו סיסמה שגויה (אבטחה: לא מגלים אם השם קיים).
             return null;
         }
 
-        // BCrypt.Verify — משווה סיסמה גולמית ל-hash שמור. לא שומרים סיסמה בטקסט גלוי.
         if (!BCrypt.Net.BCrypt.Verify(password, manager.PasswordHash))
         {
             return null;
         }
 
-        // record — טיפוס immutable קצר; ManagerId + ManagerName מספיקים ל-JWT.
-        return new ManagerAuthResult(manager.ManagerId, manager.ManagerName);
+        return new ManagerAuthResult(manager.ManagerId, manager.Email, manager.ManagerName);
+    }
+
+    public async Task<ManagerRegistrationResult> RegisterAsync(
+        string email,
+        string password,
+        CancellationToken cancellationToken = default)
+    {
+        if (!TryNormalizeEmail(email, out var normalizedEmail))
+        {
+            return ManagerRegistrationResult.Fail("כתובת מייל לא תקינה.");
+        }
+
+        if (string.IsNullOrWhiteSpace(password) || password.Length < 6)
+        {
+            return ManagerRegistrationResult.Fail("סיסמה חייבת להכיל לפחות 6 תווים.");
+        }
+
+        var emailExists = await _db.Managers
+            .AnyAsync(entry => entry.Email == normalizedEmail, cancellationToken);
+
+        if (emailExists)
+        {
+            return ManagerRegistrationResult.Fail("כתובת המייל כבר רשומה במערכת.");
+        }
+
+        var manager = new Manager
+        {
+            Email = normalizedEmail,
+            ManagerName = BuildDisplayNameFromEmail(normalizedEmail),
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
+        };
+
+        _db.Managers.Add(manager);
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ManagerRegistrationResult.Ok(
+            new ManagerAuthResult(manager.ManagerId, manager.Email, manager.ManagerName));
+    }
+
+    private static bool TryNormalizeEmail(string? email, out string normalizedEmail)
+    {
+        normalizedEmail = string.Empty;
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return false;
+        }
+
+        var trimmed = email.Trim();
+
+        try
+        {
+            var parsed = new MailAddress(trimmed);
+            if (!string.Equals(parsed.Address, trimmed, StringComparison.OrdinalIgnoreCase))
+            {
+                return false;
+            }
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
+
+        normalizedEmail = trimmed.ToLowerInvariant();
+        return true;
+    }
+
+    private static string BuildDisplayNameFromEmail(string normalizedEmail)
+    {
+        var atIndex = normalizedEmail.IndexOf('@');
+        return atIndex > 0
+            ? normalizedEmail[..atIndex]
+            : normalizedEmail;
     }
 }
 
-public sealed record ManagerAuthResult(int ManagerId, string ManagerName);
+public sealed record ManagerAuthResult(int ManagerId, string Email, string ManagerName);
+
+public sealed record ManagerRegistrationResult(
+    bool Success,
+    ManagerAuthResult? Manager,
+    string? Error)
+{
+    public static ManagerRegistrationResult Ok(ManagerAuthResult manager) =>
+        new(true, manager, null);
+
+    public static ManagerRegistrationResult Fail(string error) =>
+        new(false, null, error);
+}

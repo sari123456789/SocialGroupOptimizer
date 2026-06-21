@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Selection.BestImprovementSearchStrategy" BaseTypeListCollapsed="true">
+    <Position X="4.25" Y="1.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Selection\BestImprovementSearchStrategy.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Selection.SearchDecision">
+    <Position X="7.25" Y="1.25" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAEAAAAAAIAAAAQgAAAAAAEAAAAAACAAAAAAAI=</HashCode>
+      <FileName>Algorithm\LocalSearch\Selection\SearchDecision.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="MyProject.BL.Algorithm.LocalSearch.Selection.ISearchStrategy">
+    <Position X="5.5" Y="3" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Selection\ISearchStrategy.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="MyProject.BL.Algorithm.LocalSearch.Selection.SearchDecisionStatus">
+    <Position X="3.5" Y="2.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAQAAAAAAAEQAAAAACAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Selection\SearchDecisionStatus.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

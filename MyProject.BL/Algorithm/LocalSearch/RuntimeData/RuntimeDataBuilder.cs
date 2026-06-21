@@ -5,12 +5,15 @@ using MyProject.BL.Algorithm.SolutionState;
 namespace MyProject.BL.Algorithm.LocalSearch.RuntimeData;
 
 /// <summary>
-/// בונה <see cref="RuntimeDataSnapshot"/> מניתוח החלוקה הנוכחית בלבד.
+/// תפקיד המחלקה: בניית נתוני עזר לחיפוש המקומי בתחילת כל איטרציה.
+/// המחלקה משתתפת בשלב יצירת מועמדים — מונעת סריקה חוזרת של כל הנתונים.
 /// </summary>
 public static class RuntimeDataBuilder
 {
     /// <summary>
-    /// נקודת כניסה: בונה את כל מבני הנתונים מהחלוקה הנוכחית.
+    /// תפקיד הפונקציה: בונה RuntimeDataSnapshot — צילום נתונים — מהחלוקה הנוכחית.
+    /// קלט עיקרי: AssignmentState — מצב חלוקה, רשימת משתתפים.
+    /// פלט עיקרי: אינדקסים, פרופילים ורשימות ממוינות לאסטרטגיות ה-Generation.
     /// </summary>
     public static RuntimeDataSnapshot Build(
         AssignmentState state,
@@ -26,6 +29,7 @@ public static class RuntimeDataBuilder
             throw new ArgumentNullException(nameof(participants));
         }
 
+        // שלב 1: אינדקסי העדפות — בסיס לכל שאר הניתוח.
         var preferenceIndex = ParticipantPreferenceIndex.Create(participants);
         var mutualPreferenceIndex = MutualPreferenceIndex.Create(preferenceIndex, participants);
         var friendClusterIndex = FriendClusterIndex.Create(mutualPreferenceIndex, participants);
@@ -198,6 +202,11 @@ public static class RuntimeDataBuilder
         return profiles;
     }
 
+    /// <summary>
+    /// תפקיד הפונקציה: בונה פרופילים לקלאסטרים חברים — מזהה אשכולות מפוצלים בין קבוצות.
+    /// קלט עיקרי: מצב חלוקה, אינדקס הדדיות, אינדקס קלאסטרים.
+    /// פלט עיקרי: רשימת ClosedFriendGroupProfile לכל אשכול עם יותר ממשתתף אחד.
+    /// </summary>
     private static List<ClosedFriendGroupProfile> BuildClosedFriendGroupProfiles(
         AssignmentState state,
         MutualPreferenceIndex mutualPreferenceIndex,

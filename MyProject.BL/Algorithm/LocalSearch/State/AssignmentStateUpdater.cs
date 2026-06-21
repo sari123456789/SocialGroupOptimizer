@@ -5,19 +5,16 @@ using MyProject.BL.Algorithm.SolutionState;
 namespace MyProject.BL.Algorithm.LocalSearch.State;
 
 /// <summary>
-/// נקודת הכניסה היחידה לשינוי מיפויי <see cref="AssignmentState"/>.
+/// תפקיד המחלקה: עדכון מצב החלוקה בעקבות מהלך — שומר עקבות בין שני המיפויים.
+/// המחלקה משתתפת בשלב הערכה (עותק) ובשלב ביצוע (in-place).
 /// </summary>
-/// <remarks>
-/// נקרא מ-: MoveEvaluator (ApplyToClone), MoveExecutor (ApplyMoveInPlace) — עתידי.
-/// </remarks>
 public static class AssignmentStateUpdater
 {
     /// <summary>
-    /// מיישם move על עותק — המקור נשאר ללא שינוי.
+    /// תפקיד הפונקציה: מיישם מהלך על עותק — המקור נשאר ללא שינוי.
+    /// קלט עיקרי: מצב נוכחי, MoveCandidate.
+    /// פלט עיקרי: AssignmentState חדש — לשימוש ב-MoveEvaluator.
     /// </summary>
-    /// <param name="state">מצב נוכחי.</param>
-    /// <param name="move">Swap או Transfer.</param>
-    /// <returns>מצב חדש אחרי ה-move.</returns>
     public static AssignmentState ApplyToClone(AssignmentState state, MoveCandidate move)
     {
         if (state is null)
@@ -39,10 +36,10 @@ public static class AssignmentStateUpdater
     }
 
     /// <summary>
-    /// מיישם move in-place — משנה את state ישירות.
+    /// תפקיד הפונקציה: מיישם מהלך in-place על מצב החלוקה הפעיל.
+    /// קלט עיקרי: מצב לעדכון, MoveCandidate.
+    /// פלט עיקרי: עדכון שני המיפויים וה-Hash.
     /// </summary>
-    /// <param name="state">מצב לעדכון.</param>
-    /// <param name="move">הצעת שינוי.</param>
     public static void ApplyMoveInPlace(AssignmentState state, MoveCandidate move)
     {
         if (state is null)

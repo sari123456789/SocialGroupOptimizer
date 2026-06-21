@@ -1,0 +1,126 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.Models.PlacementUnitRequest">
+    <Position X="3.5" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAABAAAAAAAAAEBAAAAAAAAAAAAAEAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\Models\PlacementUnitRequest.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.Models.SolverRequest">
+    <Position X="5.75" Y="0.5" Width="3" />
+    <TypeIdentifier>
+      <HashCode>CQAAAEAgEAAAAAAAAAAAAAAAAIAAAAAAACAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\Models\SolverRequest.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.Models.SolverResponse">
+    <Position X="3.75" Y="3.25" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAEQAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAQA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\Models\SolverResponse.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.ExternalSolverClient" BaseTypeListCollapsed="true">
+    <Position X="9.25" Y="2" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAADAAAAAEABAAAAAAAAAAAABAAAQAAAAAAgA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\ExternalSolverClient.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.ExternalSolverFallback" BaseTypeListCollapsed="true">
+    <Position X="11.25" Y="0.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEAAAAAAQAAACAAAgAAAAAAAAAAAAAAAABA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\ExternalSolverFallback.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.SolverFallbackPlaceholder" BaseTypeListCollapsed="true">
+    <Position X="13.25" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\SolverFallbackPlaceholder.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.SolverInputBuilder">
+    <Position X="15.75" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAIAAAAAAAAABEABCgAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\SolverInputBuilder.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.SolverInputBuildResult">
+    <Position X="11.25" Y="3" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAAAQAAAAAAAAAAAgAAgACAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\SolverInputBuildResult.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.SolverJobWireMapper">
+    <Position X="13.25" Y="1.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\SolverJobWireMapper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.SolverResultMapper">
+    <Position X="16.25" Y="5.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAABAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAQAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\SolverResultMapper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.SolverResultMapResult">
+    <Position X="16" Y="3" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAABAAAAAAAAQAAAAAAAQAAAgAAAACAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\SolverResultMapResult.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.SolverTranslationValidationResult">
+    <Position X="6.25" Y="4.75" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAEAAAAQAAAAgAAAAAAAAAAAAAAAAABAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\SolverTranslationValidationResult.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Solver.SolverTranslationValidator">
+    <Position X="13.5" Y="3" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAACAAAAAAIAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\SolverTranslationValidator.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="MyProject.BL.Algorithm.InitialPlacement.Solver.IExternalSolverClient">
+    <Position X="7" Y="3.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\IExternalSolverClient.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="MyProject.BL.Algorithm.InitialPlacement.Solver.ISolverFallback">
+    <Position X="14.25" Y="5.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\ISolverFallback.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="MyProject.BL.Algorithm.InitialPlacement.Solver.Models.PlacementUnitKind">
+    <Position X="9.25" Y="5.25" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAEAAAAAAACAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\Models\PlacementUnitRequest.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="MyProject.BL.Algorithm.InitialPlacement.Solver.Models.SolverResponseStatus">
+    <Position X="9" Y="0.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAgAAIAAAABAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Solver\Models\SolverResponse.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

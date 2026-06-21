@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.Data.Mapping.ClassificationCatalog">
+    <Position X="4.25" Y="0.75" Width="3" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAgAgAAAAAGAAAAAAAAAAAUAAAAAAAAAA=</HashCode>
+      <FileName>Mapping\ClassificationCatalog.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Mapping.ConstraintMapper">
+    <Position X="8.75" Y="2.75" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAAAgBAAgAAAEACAIAAAAAAAAAAAAAAABACAI=</HashCode>
+      <FileName>Mapping\ConstraintMapper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Mapping.ParticipantAssignmentContext">
+    <Position X="4.25" Y="3.75" Width="4" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAgBAAAAAIAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Mapping\ParticipantAssignmentContext.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Mapping.ParticipantMapper">
+    <Position X="7.75" Y="0.75" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>EAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAQ=</HashCode>
+      <FileName>Mapping\ParticipantMapper.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

@@ -58,12 +58,20 @@ public sealed class GroupSizeConstraint : IConstraint
     public bool IsSatisfied(Assignment assignment)
     {
         var group = assignment.Groups.FirstOrDefault(g => g.Id == GroupId);
+
+        // קבוצה שאינה בשימוש (לא קיימת בחלוקה או ריקה) — האילוץ חל רק על קבוצה פעילה.
+        // מספר הקבוצות בפועל נשלט על ידי GroupCountConstraint, ולכן מותר טווח גמיש.
         if (group is null)
         {
-            return false;
+            return true;
         }
 
         var count = group.ParticipantIds.Count;
+        if (count == 0)
+        {
+            return true;
+        }
+
         return count >= MinSize && count <= MaxCapacity.Value;
     }
 }

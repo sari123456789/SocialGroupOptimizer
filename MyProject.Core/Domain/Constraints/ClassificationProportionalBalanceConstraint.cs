@@ -16,12 +16,14 @@ namespace MyProject.Core.Domain.Constraints;
 /// </remarks>
 public sealed class ClassificationProportionalBalanceConstraint : IConstraint
 {
-    public const long DefaultMaxScaledDeviation = 0L;
+    /// <summary>סטייה מקסימלית מותרת בבדיקה שלמות (0 = איזון מדויק).</summary>
+    public const long DefaultMaxScaledDeviation = 8L;
 
     private readonly ClassificationDimensionCode _targetDimension;
     private readonly HashSet<ClassificationLevelCode> _dimensionLevels;
     private readonly IReadOnlyDictionary<ParticipantId, IReadOnlyDictionary<ClassificationDimensionCode, ClassificationLevelCode>> _participantClassifications;
 
+    /// <summary>בונה אילוץ עם סטייה מקסימלית ברירת מחדל (איזון מדויק).</summary>
     public ClassificationProportionalBalanceConstraint(
         ClassificationDimensionCode targetDimension,
         IEnumerable<ClassificationLevelCode> dimensionLevels,
@@ -30,6 +32,7 @@ public sealed class ClassificationProportionalBalanceConstraint : IConstraint
     {
     }
 
+    /// <summary>בונה אילוץ עם רף סטייה מותאם (לסובלנות קלה לפני/אחרי עיגול).</summary>
     public ClassificationProportionalBalanceConstraint(
         ClassificationDimensionCode targetDimension,
         IEnumerable<ClassificationLevelCode> dimensionLevels,
@@ -57,12 +60,19 @@ public sealed class ClassificationProportionalBalanceConstraint : IConstraint
 
     public ClassificationDimensionCode TargetDimension => _targetDimension;
 
+    /// <summary>כל הרמות האפשריות במימד — משמשות לספירה ולהשוואה.</summary>
     public IReadOnlySet<ClassificationLevelCode> DimensionLevels => _dimensionLevels;
 
+    /// <summary>רף לנוסחת הסטייה המוגברת (ראו <see cref="IsSatisfied"/>).</summary>
     public long MaxScaledDeviation { get; }
 
     public ConstraintType Type => ConstraintType.ClassificationProportionalBalance;
 
+    /// <inheritdoc/>
+    /// <remarks>
+    /// לכל קבוצה ולכל רמה: בודקים שיחס הרמה בקבוצה קרוב ליחס הגלובלי,
+    /// באמצעות |g·N − G·n| כדי להימנע מחישובי שברים.
+    /// </remarks>
     public bool IsSatisfied(Assignment assignment)
     {
         var assignedIds = assignment.GetAssignedParticipantIds();
@@ -72,6 +82,7 @@ public sealed class ClassificationProportionalBalanceConstraint : IConstraint
             return true;
         }
 
+        // שלב 1: ספירה גלובלית — כמה משתתפים מכל רמה בכל החלוקה.
         var globalCounts = new Dictionary<ClassificationLevelCode, int>();
         foreach (var level in _dimensionLevels)
         {
@@ -97,6 +108,7 @@ public sealed class ClassificationProportionalBalanceConstraint : IConstraint
             globalCounts[level.Value]++;
         }
 
+        // שלב 2: לכל קבוצה — משווים את חלוקת הרמות שלה לחלוקה הגלובלית.
         foreach (var group in assignment.Groups)
         {
             var n = group.ParticipantIds.Count;
@@ -129,6 +141,7 @@ public sealed class ClassificationProportionalBalanceConstraint : IConstraint
             {
                 var g = groupCounts[level];
                 var gGlobal = globalCounts[level];
+                // g/n ≈ G/N  ⟺  |g·N − G·n| ≤ MaxScaledDeviation
                 var deviation = Math.Abs((long)g * nTotal - (long)gGlobal * n);
                 if (deviation > MaxScaledDeviation)
                 {

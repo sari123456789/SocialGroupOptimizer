@@ -24,6 +24,8 @@ interface AssignmentOverviewTabProps {
   onMaxGroupsChange: (value: string) => void
   onMinGroupSizeChange: (value: string) => void
   onMaxGroupSizeChange: (value: string) => void
+  onExplainParticipant?: (participantId: string) => void
+  onManualMove?: () => void
 }
 
 export function AssignmentOverviewTab({
@@ -45,6 +47,8 @@ export function AssignmentOverviewTab({
   onMaxGroupsChange,
   onMinGroupSizeChange,
   onMaxGroupSizeChange,
+  onExplainParticipant,
+  onManualMove,
 }: AssignmentOverviewTabProps) {
   return (
     <div className="space-y-6">
@@ -87,12 +91,37 @@ export function AssignmentOverviewTab({
 
         {detail.status === 'Validated' && detail.placementGroups.length > 0 && (
           <div className="mt-4">
+            {onManualMove && (
+              <div className="mb-3 flex justify-end">
+                <button
+                  type="button"
+                  onClick={onManualMove}
+                  className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  שינוי ידני
+                </button>
+              </div>
+            )}
+            {detail.placementScore != null && (
+              <p className="mb-3 text-sm text-slate-700">
+                ציון חלוקה:{' '}
+                <strong>{detail.placementScore.toFixed(1)}%</strong>
+                {detail.initialPlacementScore != null && (
+                  <span className="text-slate-600">
+                    {' '}
+                    (לפני שיפור: {detail.initialPlacementScore.toFixed(1)}%, אחרי שיפור: {detail.placementScore.toFixed(1)}%)
+                  </span>
+                )}
+              </p>
+            )}
             <PlacementResult
               result={{
                 status: detail.lastPlacementStatus ?? 'Success',
                 groups: detail.placementGroups,
                 errors: [],
               }}
+              participants={detail.participants}
+              onExplain={onExplainParticipant}
             />
           </div>
         )}

@@ -1,347 +1,217 @@
-// =============================================================================
-
+// 
 // Program.cs — נקודת הכניסה של שכבת ה-API.
-
-// =============================================================================
-
+// 
 // תפקיד הקובץ:
-
 // 1) לקרוא הגדרות מ-appsettings.json
-
 // 2) לרשום שירותים (Dependency Injection)
-
-// 3) להגדיר אימות JWT, CORS ו-Swagger
-
+// 3) להגדיר אימות JWT ו-CORS
 // 4) לבנות את pipeline של ASP.NET Core ולהפעיל את השרת
-
-//
-
-// תחביר "var builder = WebApplication.CreateBuilder(args)":
-
-// יוצר אובייקט בנייה ל-WebApplication. args מגיע משורת הפקודה dotnet run.
-
-// =============================================================================
-
-
+// 
 
 using System.Text;
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-
 using Microsoft.EntityFrameworkCore;
-
 using Microsoft.IdentityModel.Tokens;
-
 using MyProject.API.Auth;
-
 using MyProject.API.Configuration;
-
 using MyProject.API.Placement;
-
 using MyProject.API.Placement.Excel;
-
 using MyProject.BL.Algorithm.Improvement;
-
 using MyProject.BL.Algorithm.InitialPlacement.Orchestration;
-
 using MyProject.BL.Algorithm.LocalSearch.Engine;
 using MyProject.BL.Algorithm.LocalSearch.Evaluation;
 using MyProject.BL.Algorithm.LocalSearch.Execution;
+using MyProject.BL.Algorithm.LocalSearch.GroupRebalance.Evaluation;
+using MyProject.BL.Algorithm.LocalSearch.GroupRebalance.Strategies;
 using MyProject.BL.Algorithm.LocalSearch.Generation;
 using MyProject.BL.Algorithm.LocalSearch.Generation.Strategies;
 using MyProject.BL.Algorithm.LocalSearch.Selection;
-
 using MyProject.BL.Logic.Configuration;
-
 using MyProject.BL.Logic.Constraints;
-
 using MyProject.BL.Logic.Scoring;
-
+using MyProject.BL.ManualMoves;
+using MyProject.BL.Transparency;
 using MyProject.Core.Domain.Services;
-
 using MyProject.Data;
-
 using MyProject.Data.Import;
 
-
-
+// var — משתנה עם הסקת טיפוס; WebApplication.CreateBuilder יוצר אובייקט בנייה; args הוא מערך ארגומנטים משורת הפקודה
 var builder = WebApplication.CreateBuilder(args);
 
-
-
-// ===== שלב 1: חיבור למסד =====
-
-// GetConnectionString קורא מ-Configuration את המפתח "DefaultConnection".
-
-// תחביר "?? throw" אומר: אם החיבור חסר — עוצרים מיד עם חריגה ברורה.
-
+//   שלב 1: חיבור למסד  
+// var — קורא מחרוזת חיבור מה-Configuration לפי המפתח "DefaultConnection"
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-
+    // ?? throw — אם התוצאה null, זורק InvalidOperationException במקום להמשיך עם ערך חסר
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
 
-
-
-// AddApplicationPersistence מוגדר ב-MyProject.Data/ServiceCollectionExtensions.cs
-
-// ורושם ApplicationDbContext עם SQL Server.
-
+// builder.Services — רושם ApplicationDbContext ו-SQL Server דרך הרחבה מ-MyProject.Data
 builder.Services.AddApplicationPersistence(connectionString);
 
-
-
-// ===== שלב 2: רישום שירותי Placement (Scoped) =====
-
-// Scoped = מופע חדש לכל בקשת HTTP. מתאים לשירותים שמשתמשים ב-DbContext.
-
+//   שלב 2: רישום שירותי Placement (Scoped)  
+// AddScoped<T> — מופע חדש של T לכל בקשת HTTP (מתאים לשירותים עם DbContext)
 builder.Services.AddScoped<AssignmentPlacementLoader>();
-
+// AddScoped — טוען תוצאות שיבוץ קיימות מהמסד
 builder.Services.AddScoped<AssignmentPlacementRunner>();
-
+// AddScoped — טוען רשימת משתתפים לשיבוץ
 builder.Services.AddScoped<AssignmentParticipantsLoader>();
-
+// AddScoped — טוען פרטי שיבוץ בודד
 builder.Services.AddScoped<AssignmentDetailLoader>();
-
+// AddScoped — שירות עריכת שיבוץ (CRUD על משתתפים וקבוצות)
 builder.Services.AddScoped<AssignmentEditorService>();
-
+// AddScoped — מאמת נתונים לפני חלוקה ראשונית
 builder.Services.AddScoped<AssignmentInitialPlacementValidator>();
-
+// AddScoped — טוען הסברי שיבוץ ל-API
+builder.Services.AddScoped<AssignmentExplanationLoader>();
+// AddScoped — מטפל בהעברות/החלפות ידניות
+builder.Services.AddScoped<AssignmentManualMoveService>();
+// AddScoped — מייבא גיליון Excel יחיד לשיבוץ
 builder.Services.AddScoped<AssignmentSingleSheetImporter>();
-
-builder.Services.AddScoped<ParticipantExcelImporter>();
-
+// AddScoped — קורא חוברת Excel של משתתפים
 builder.Services.AddScoped<ParticipantsExcelWorkbookReader>();
-
+// AddScoped — מאמת מבנה ותוכן Excel
 builder.Services.AddScoped<ParticipantsExcelValidator>();
 
-builder.Services.AddScoped<ParticipantsExcelToInitialPlacementMapper>();
-
-
-
 // ===== שלב 3: אימות =====
-
-// AuthService — בודק שם+סיסמה מול המסד (BCrypt).
-
-// JwtTokenService — מנפיק JWT לאחר התחברות מוצלחת.
-
+// AddScoped — שירות התחברות (בדיקת סיסמה מול המסד)
 builder.Services.AddScoped<AuthService>();
-
+// AddScoped — הנפקת JWT לאחר התחברות מוצלחת
 builder.Services.AddScoped<JwtTokenService>();
-
-
-
-// Configure<T> קושר קטע הגדרות מ-appsettings ל-JwtSettings (Key, Issuer, Audience...).
-
+// Configure<T> — קושר קטע הגדרות מ-appsettings לאובייקט JwtSettings (Options pattern)
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 
-
-
 // ===== שלב 4: רישום שכבת BL (Singleton) =====
-
-// Singleton = מופע אחד לכל חיי האפליקציה. מתאים למנועים stateless.
-
-// AlgorithmSettingsRegistration קורא את קטע "Algorithm" מהגדרות.
-
+// AddSingleton — מופע יחיד לכל חיי האפליקציה; BindFromConfiguration קורא קטע "Algorithm"
 builder.Services.AddSingleton(AlgorithmSettingsRegistration.BindFromConfiguration(builder.Configuration));
-
-
-
-// IAssignmentValidator הוא ממשק Core; ConstraintEngine הוא המימוש ב-BL.
-
-// כך האלגוריתם מאמת אילוצים דרך ממשק אחיד — לא ישירות מול API.
-
+// AddSingleton<I,T> — רושם ConstraintEngine כמימוש של IAssignmentValidator
 builder.Services.AddSingleton<IAssignmentValidator, ConstraintEngine>();
-
-// IAssignmentScorer — מימוש ScoringManager; נדרש ל-MoveEvaluator ול-Local Search עתידי.
-
+// AddSingleton<I,T> — רושם ScoringManager כמימוש של IAssignmentScorer
 builder.Services.AddSingleton<IAssignmentScorer, ScoringManager>();
-
-// Local Search — הערכת מועמדי move (לא מתזמר / לא SearchStrategy).
-
+// AddSingleton<I,T> — שירות הסבר שיבוץ (קריאה בלבד)
+builder.Services.AddSingleton<IAssignmentExplanationService, AssignmentExplanationService>();
+// AddSingleton<I,T> — מעריך מהלכים ידניים (Swap/Transfer)
+builder.Services.AddSingleton<IManualMoveEvaluator, ManualMoveEvaluator>();
+// AddSingleton<I,T> — מעריך ציון של מהלך בודד ב-Local Search
 builder.Services.AddSingleton<IMoveEvaluator, MoveEvaluator>();
-
+// AddSingleton<I,T> — מעריך אצווה של מועמדי מהלכים
 builder.Services.AddSingleton<IMoveEvaluationBatch, MoveEvaluationBatch>();
-
+// AddSingleton<I,T> — אסטרטגיית בחירה: המהלך עם השיפור הטוב ביותר
 builder.Services.AddSingleton<ISearchStrategy, BestImprovementSearchStrategy>();
-
+// AddSingleton<I,T> — מבצע מהלך על מצב השיבוץ בפועל
 builder.Services.AddSingleton<IMoveExecutor, MoveExecutor>();
-
-// Local Search — יצירת מועמדים ומנוע חיפוש.
-
+// AddSingleton<I,T> — אסטרטגיית מועמדים: משתתף מבודד
 builder.Services.AddSingleton<IMoveCandidateStrategy, IsolatedParticipantStrategy>();
+// AddSingleton<I,T> — אסטרטגיית מועמדים: כמעט-פגיעה באילוץ
 builder.Services.AddSingleton<IMoveCandidateStrategy, NearMissStrategy>();
+// AddSingleton<I,T> — אסטרטגיית מועמדים: קבוצה עם ציון נמוך
 builder.Services.AddSingleton<IMoveCandidateStrategy, LowScoreGroupStrategy>();
+// AddSingleton<I,T> — אסטרטגיית מועמדים: תרומה נמוכה לקבוצה
 builder.Services.AddSingleton<IMoveCandidateStrategy, LowContributionStrategy>();
+// AddSingleton<I,T> — אסטרטגיית מועמדים: אקראי מבוקר
 builder.Services.AddSingleton<IMoveCandidateStrategy, ControlledRandomStrategy>();
+// AddSingleton — מדיניות שילוב אסטרטגיות יצירת מועמדים
 builder.Services.AddSingleton<MoveGenerationPolicy>();
+// AddSingleton — מחולל מהלכי החלפה (Swap) בין משתתפים
 builder.Services.AddSingleton<SwapMoveGenerator>();
+// AddSingleton<I,T> — מנוע Local Search המלא
 builder.Services.AddSingleton<ILocalSearchEngine, LocalSearchEngine>();
-
+// AddSingleton — מעריך איזון קבוצות (fallback אחרי Local Search)
+builder.Services.AddSingleton<GroupRebalanceEvaluator>();
+// AddSingleton — אסטרטגיית פיצול אשכול לאיזון קבוצות
+builder.Services.AddSingleton<SplitClusterRebalanceStrategy>();
+// AddSingleton עם lambda _ => — יוצר מופע חדש של ScoringWeights ללא תלות ב-DI
 builder.Services.AddSingleton(_ => new ScoringWeights());
-
+// AddSingleton<I,T> — מתזמר שיפור שיבוץ (Local Search + GroupRebalance)
 builder.Services.AddSingleton<IAssignmentImprovementOrchestrator, AssignmentImprovementOrchestrator>();
-
-
-
-// InitialPlacementOrchestrator מתזמר את תהליך החלוקה הראשונית ב-BL.
-
+// AddSingleton — מתזמר תהליך החלוקה הראשונית
 builder.Services.AddSingleton<InitialPlacementOrchestrator>();
 
-
-
 // ===== שלב 5: הגדרת JWT Bearer =====
-
+// var — קורא הגדרות JWT מה-Configuration וממיר ל-JwtSettings; Get<T>() מבצע deserialization
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()
-
+    // ?? throw — אם ההגדרות חסרות, עוצרים עם חריגה ברורה
     ?? throw new InvalidOperationException("Jwt settings are not configured.");
 
-
-
+// Fluent API — מתחיל רישום אימות; AddAuthentication מגדיר סכימת ברירת מחדל
 builder.Services
-
+    // AddAuthentication — בוחר סכימת JWT Bearer כברירת מחדל
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-
+    // AddJwtBearer — מגדיר אימות לפי טוקן Bearer בכותרת Authorization
     .AddJwtBearer(options =>
-
     {
-
-        // TokenValidationParameters מגדיר מה לבדוק בכל בקשה עם כותרת Authorization: Bearer ...
-
+        // options.TokenValidationParameters — אובייקט שמגדיר מה לבדוק בכל בקשה עם טוקן
         options.TokenValidationParameters = new TokenValidationParameters
-
         {
-
-            ValidateIssuer = true,           // מי הנפיק את הטוקן
-
-            ValidateAudience = true,         // למי הטוקן מיועד (הלקוח)
-
-            ValidateLifetime = true,         // האם פג תוקף
-
-            ValidateIssuerSigningKey = true, // האם החתימה תקינה
-
+            // property assignment — חייב לבדוק שה-Issuer בטוקן תואם
+            ValidateIssuer = true,
+            // property assignment — חייב לבדוק שה-Audience בטוקן תואם
+            ValidateAudience = true,
+            // property assignment — חייב לבדוק שתוקף הטוקן לא פג
+            ValidateLifetime = true,
+            // property assignment — חייב לאמת את חתימת הטוקן
+            ValidateIssuerSigningKey = true,
+            // ValidIssuer — ערך Issuer מותר מההגדרות
             ValidIssuer = jwtSettings.Issuer,
-
+            // ValidAudience — ערך Audience מותר מההגדרות
             ValidAudience = jwtSettings.Audience,
-
-            // SymmetricSecurityKey — מפתח סודי משותף לחתימה ולאימות (HMAC).
-
+            // new SymmetricSecurityKey — מפתח סימטרי מ-bytes של המפתח הסודי (HMAC)
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.Key)),
-
         };
-
     });
 
-
-
-// AddAuthorization מאפשר שימוש ב-[Authorize] על בקרים.
-
+// AddAuthorization — מאפשר שימוש ב-[Authorize] על בקרים ופעולות
 builder.Services.AddAuthorization();
-
-
-
+// AddControllers — רושם MVC Controllers ומפעיל model binding / validation
 builder.Services.AddControllers();
 
-builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddSwaggerGen();
-
-
-
 // ===== שלב 6: CORS =====
-
-// CORS (Cross-Origin Resource Sharing) — מאפשר ללקוח React (פורט 5173/5174)
-
-// לשלוח בקשות ל-API (פורט 5256) מהדפדפן.
-
-// WithoutOrigins — רק כתובות localhost מפורשות מורשות (לא "*" ב-production).
-
+// AddCors — רושם מדיניות CORS; lambda options => מגדיר את האפשרויות
 builder.Services.AddCors(options =>
-
 {
-
+    // AddDefaultPolicy — מדינית ברירת מחדל לכל הבקשות
     options.AddDefaultPolicy(policy =>
-
     {
-
+        // WithOrigins — רשימת כתובות מקור מורשות (React בפיתוח)
         policy.WithOrigins(
-
                 "http://localhost:5173",
-
                 "https://localhost:5173",
-
                 "http://localhost:5174",
-
                 "https://localhost:5174")
-
-            .AllowAnyHeader()   // מאפשר כותרת Authorization
-
-            .AllowAnyMethod();  // GET, POST, PUT, DELETE...
-
+            // AllowAnyHeader — מאפשר כל כותרת (כולל Authorization)
+            .AllowAnyHeader()
+            // AllowAnyMethod — מאפשר GET, POST, PUT, DELETE וכו'
+            .AllowAnyMethod();
     });
-
 });
 
-
-
-// Build() סוגר את שלב הרישום ויוצר WebApplication מוכן להרצה.
-
+// var — Build() סוגר רישום שירותים ויוצר WebApplication מוכן להרצה
 var app = builder.Build();
 
-
-
 // ===== שלב 7: אתחול Development בלבד =====
-
+// if — בודק אם סביבת הריצה היא Development (מ-appsettings / משתנה סביבה)
 if (app.Environment.IsDevelopment())
-
 {
-
-    // CreateScope יוצר Scope DI זמני — DbContext חי רק בתוך הבלוק.
-
+    // using — יוצר Scope DI זמני; var scope — משתנה שיושמד בסוף הבלוק (IDisposable)
     using (var scope = app.Services.CreateScope())
-
     {
-
+        // var — GetRequiredService מחזיר DbContext מה-Scope; זורק אם לא רשום
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-
-        // Migrate() מריץ מיגרציות EF שלא הוחלו עדיין.
-
+        // Migrate() — מריץ מיגרציות EF שלא הוחלו על המסד
         db.Database.Migrate();
-
-        // SeedAsync טוען נתוני דמו (מנהל, משתתפים לדוגמה) אם המסד ריק.
-
+        // await — ממתין לסיום טעינת נתוני דמו (Seed) באופן אסינכרוני
         await DevelopmentDataSeeder.SeedAsync(db);
-
     }
-
-
-
-    app.UseSwagger();
-
-    app.UseSwaggerUI();
-
 }
 
-
-
 // ===== שלב 8: Middleware pipeline =====
-
-// הסדר חשוב: CORS לפני Auth, Auth לפני MapControllers.
-
-app.UseHttpsRedirection(); // מפנה HTTP→HTTPS כשמוגדר
-
+// UseHttpsRedirection — middleware שמפנה בקשות HTTP ל-HTTPS
+app.UseHttpsRedirection();
+// UseCors — middleware שמוסיף כותרות CORS לתשובות
 app.UseCors();
-
-app.UseAuthentication();   // קורא Bearer token וממלא HttpContext.User
-
-app.UseAuthorization();    // בודק [Authorize]
-
-
-
-// MapControllers מחבר את כל הבקרים (Controllers) לנתיבי URL.
-
+// UseAuthentication — middleware שקורא Bearer token וממלא HttpContext.User
+app.UseAuthentication();
+// UseAuthorization — middleware שבודק הרשאות ו-[Authorize]
+app.UseAuthorization();
+// MapControllers — מחבר את כל ה-Controllers לנתיבי URL
 app.MapControllers();
-
-
-
+// Run() — מתחיל להאזין לבקשות HTTP וחוסם עד כיבוי השרת
 app.Run();
-
-

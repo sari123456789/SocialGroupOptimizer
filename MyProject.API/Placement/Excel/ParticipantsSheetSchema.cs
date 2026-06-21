@@ -1,5 +1,6 @@
 namespace MyProject.API.Placement.Excel;
 
+// סוגי העמודות הקבועות בגיליון
 public enum ParticipantsSheetColumnKind
 {
     ParticipantId,
@@ -10,10 +11,12 @@ public enum ParticipantsSheetColumnKind
     Classification,
 }
 
+// עמודת סיווג — שם המימד + מיקום בעמודה
 public sealed record ClassificationColumnDefinition(
     string DimensionCode,
     int ColumnIndex);
 
+// המבנה שזוהה משורת הכותרות
 public sealed class ParticipantsSheetSchema
 {
     public ParticipantsSheetSchema(
@@ -24,10 +27,13 @@ public sealed class ParticipantsSheetSchema
         ClassificationColumns = classificationColumns ?? throw new ArgumentNullException(nameof(classificationColumns));
     }
 
+    // איפה כל עמודה קבועה נמצאת
     public IReadOnlyDictionary<ParticipantsSheetColumnKind, int> FixedColumns { get; }
 
+    // עמודות סיווג נוספות (Class, Level וכו')
     public IReadOnlyList<ClassificationColumnDefinition> ClassificationColumns { get; }
 
+    // מחזיר מספר עמודה — זורק אם חסרה
     public int GetRequiredColumn(ParticipantsSheetColumnKind kind)
     {
         if (!FixedColumns.TryGetValue(kind, out var columnIndex))

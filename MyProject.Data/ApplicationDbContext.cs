@@ -36,9 +36,10 @@ public sealed class ApplicationDbContext : DbContext
         modelBuilder.Entity<Manager>(e =>
         {
             e.HasKey(m => m.ManagerId);
+            e.Property(m => m.Email).HasMaxLength(256);
             e.Property(m => m.ManagerName).HasMaxLength(256);
             e.Property(m => m.PasswordHash).HasMaxLength(256);
-            e.HasIndex(m => m.ManagerName).IsUnique();
+            e.HasIndex(m => m.Email).IsUnique();
         });
 
         modelBuilder.Entity<ManagementGroup>(e =>

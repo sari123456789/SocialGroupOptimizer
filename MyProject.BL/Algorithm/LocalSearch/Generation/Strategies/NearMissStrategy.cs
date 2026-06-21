@@ -6,7 +6,8 @@ using MyProject.BL.Algorithm.SolutionState;
 namespace MyProject.BL.Algorithm.LocalSearch.Generation.Strategies;
 
 /// <summary>
-/// אסטרטגיית כמעט שיפור.
+/// תפקיד המחלקה: אסטרטגיית כמעט-שיפור — משתתף עם חלק מהעדפות בקבוצה וחלק בחוץ.
+/// המחלקה משתתפת בשלב יצירת מועמדים — מנסה להשלים מימוש העדפות.
 /// </summary>
 public sealed class NearMissStrategy : IMoveCandidateStrategy
 {

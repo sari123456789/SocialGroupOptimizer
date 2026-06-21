@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.RuntimeData.ClosedFriendGroupProfile">
+    <Position X="0.5" Y="4" Width="2" />
+    <TypeIdentifier>
+      <HashCode>QAAAAAAAAAAAAAAAACAgAAAQAAAAAAAAAAgEAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\RuntimeData\ClosedFriendGroupProfile.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.RuntimeData.DominantParticipantIndex">
+    <Position X="8.5" Y="4.25" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAACAAAAAAAAAAAAAIAAEAoACAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\RuntimeData\DominantParticipantIndex.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.RuntimeData.FriendClusterIndex">
+    <Position X="9" Y="0.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAgAAgAAgACAAAAEAAAAAAAEAAAFAEAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\RuntimeData\FriendClusterIndex.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.RuntimeData.GroupRuntimeProfile">
+    <Position X="6.5" Y="3.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAAAgAAAAAAAAAAAAAAAAAAAACAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\RuntimeData\GroupRuntimeProfile.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.RuntimeData.MutualPreferenceIndex">
+    <Position X="4" Y="0.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAACAAABAAAAAAAAAAAAEAAAAAAAAQAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\RuntimeData\MutualPreferenceIndex.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.RuntimeData.ParticipantPreferenceIndex">
+    <Position X="0.5" Y="0.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>RAACEAAAAAAAAAAAAAAAAAACAAAAAEAAAAAAAAMIAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\RuntimeData\ParticipantPreferenceIndex.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.RuntimeData.ParticipantRuntimeProfile">
+    <Position X="6.75" Y="0.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAgAAAgAAAAAEAAIIAAAAAIAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\RuntimeData\ParticipantRuntimeProfile.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.RuntimeData.RuntimeDataBuilder">
+    <Position X="11.75" Y="0.75" Width="3.25" />
+    <TypeIdentifier>
+      <HashCode>EACAAAAAAAAAAAEAAUgAAACQAAAAgAAAIAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\RuntimeData\RuntimeDataBuilder.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.RuntimeData.RuntimeDataSnapshot">
+    <Position X="3.5" Y="3" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAAACIASAAAQAEAAAgAAAAAAAAAAAAAQAAgAQAE=</HashCode>
+      <FileName>Algorithm\LocalSearch\RuntimeData\RuntimeDataSnapshot.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.RuntimeData.UnrequestedParticipantIndex">
+    <Position X="12.25" Y="4.25" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAACAAAAAAAAAAAAAEAgAAAAAAAIAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\RuntimeData\UnrequestedParticipantIndex.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

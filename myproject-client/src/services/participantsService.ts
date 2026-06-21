@@ -6,10 +6,17 @@ export interface ClassificationGroup {
   participantCount: number
 }
 
+export interface ParticipantPreferenceItem {
+  rank: number
+  participantId: string
+  displayName?: string | null
+}
+
 export interface ParticipantListItem {
   participantId: string
   displayName?: string | null
   classifications: Record<string, string>
+  preferences?: ParticipantPreferenceItem[]
 }
 
 export interface AssignmentParticipants {

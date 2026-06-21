@@ -2,6 +2,7 @@ using MyProject.BL.Algorithm.InitialPlacement;
 
 namespace MyProject.API.Placement.Excel;
 
+// תוצאה אחרי המרה לקלט אלגוריתם
 public sealed class ParticipantsExcelMappingResult
 {
     public ParticipantsExcelMappingResult(
@@ -15,6 +16,7 @@ public sealed class ParticipantsExcelMappingResult
         Errors = errors ?? throw new ArgumentNullException(nameof(errors));
     }
 
+    // הצלחה רק עם קלט תקין וללא שגיאות
     public bool Success => Errors.Count == 0 && Input is not null;
 
     public InitialPlacementInput? Input { get; }

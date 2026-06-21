@@ -4,8 +4,12 @@ using MyProject.Core.Domain.ValueObjects;
 namespace MyProject.BL.Algorithm.InitialPlacement;
 
 /// <summary>
-/// בונה יחידות חובה מזוגות חובה.
+/// תפקיד המחלקה: בניית יחידות חובה מזוגות חובה באמצעות Union-Find — מבנה איחוד קבוצות.
+/// המחלקה משתתפת בשלב הכנה — לפני שיבוץ וגרף קונפליקטים.
 /// </summary>
+/// <remarks>
+/// שרשרת זוגות חובה הופכת ליחידת שיבוץ אחת שאסור לפצל.
+/// </remarks>
 public static class MandatoryGroupBuilder
 {
     /// <summary>
@@ -19,17 +23,11 @@ public static class MandatoryGroupBuilder
         InitialPlacementInput input,
         IReadOnlyList<MandatoryPairConstraint> mandatoryPairs)
     {
-        // המילון הזה הוא "מצב העבודה" של האלגוריתם:
         // מפתח = מזהה משתתף, ערך = ההורה שלו בעץ איחוד.
         //
         // בהתחלה כל משתתף הוא שורש של עצמו:
         // כלומר כל משתתף הוא יחידה נפרדת.
-        //
-        // תחביר השרשור:
-        // 1) Select  - לוקח מכל אובייקט משתתף רק את המזהה.
-        // 2) Distinct - מוודא שאין כפילויות מזהים.
-        // 3) ToDictionary - בונה מילון key/value.
-        //
+
         // למה זה חשוב?
         // כי בהמשך כל "זוג חובה" יאחד שני עצים בתוך אותו מילון.
         Dictionary<ParticipantId, ParticipantId> parentByParticipant = input.Participants
@@ -38,12 +36,8 @@ public static class MandatoryGroupBuilder
             // כל משתתף מתחיל כשהורה שלו הוא הוא עצמו.
             .ToDictionary(id => id, id => id);
 
-        // כאן עוברים על כל אילוצי "חייבים להיות יחד".
-        // לכל זוג עושים שני צעדים:
         // 1) EnsureParticipant - מוודאים ששני המשתתפים קיימים במילון העבודה.
-        //    אם אחד לא קיים, זורקים חריגה (לא מוסיפים "בשקט").
         // 2) Union - מאחדים את שתי הקבוצות לקבוצה אחת.
-        // המתודות האלה ממומשות בהמשך אותו קובץ.
         foreach (MandatoryPairConstraint pair in mandatoryPairs)
         {
             EnsureParticipant(parentByParticipant, pair.ParticipantA);
@@ -53,21 +47,13 @@ public static class MandatoryGroupBuilder
             Union(parentByParticipant, pair.ParticipantA, pair.ParticipantB);
         }
 
-        // עד כאן יש לנו "מבנה עצים" פנימי.
-        // מכאן ממירים אותו לפלט ברור:
-        // - עבור כל משתתף: מה מזהה היחידה שלו.
-        // - עבור כל יחידה: מי המשתתפים שבתוכה.
-        //
-        // למה צריך שלושה מילונים?
-        // 1) unitIdByParticipant:
-        //    מענה לשאלה "לאיזו יחידה שייך משתתף מסוים?"
-        // 2) units:
-        //    מענה לשאלה "מי החברים של יחידה מסוימת?"
-        // 3) rootToUnitId:
-        //    מיפוי זמני כדי לתת מספר רציף לכל שורש שמתגלה.
 
+
+        //לאיזו יחידה שייך משתתף מסוים? - מילון זה ייבנה תוך כדי מעבר על המשתתפים.
         Dictionary<ParticipantId, int> unitIdByParticipant = new Dictionary<ParticipantId, int>();
+        // מי משתתף ביחידה מסוימת? - מילון זה ייבנה תוך כדי מעבר על המשתתפים.
         Dictionary<int, List<ParticipantId>> units = new Dictionary<int, List<ParticipantId>>();
+        //מיפוי משתתף לאבא שלו, כדי לתת מספר יחידה רציף לכל שורש.
         Dictionary<ParticipantId, int> rootToUnitId = new Dictionary<ParticipantId, int>();
 
         // עוברים על כל המשתתפים שכבר מוכרים במבנה.
@@ -75,14 +61,9 @@ public static class MandatoryGroupBuilder
         // זה מונע בעיות אם המילון היה משתנה תוך כדי מעבר.
         foreach (ParticipantId participantId in parentByParticipant.Keys.ToList())
         {
-            // Find (ממומשת בהמשך) מחזירה את השורש של המשתתף.
-            // כל מי שמגיע לאותו שורש שייך לאותה יחידה.
+
             ParticipantId root = Find(parentByParticipant, participantId);
 
-            // TryGetValue:
-            // בודקת אם כבר נתנו מספר יחידה לשורש הזה.
-            // out var unitId = ערך שיוחזר אם נמצא.
-            // הסימן ! לפני הקריאה אומר "אם לא נמצא".
             if (!rootToUnitId.TryGetValue(root, out int unitId))
             {
                 // אם זה שורש חדש, נותנים לו מזהה רציף חדש.
@@ -92,15 +73,12 @@ public static class MandatoryGroupBuilder
             }
 
             // שיוך דו-כיווני:
-            // משתתף -> יחידה
-            // יחידה -> הוספת משתתף לרשימת חברים
             unitIdByParticipant[participantId] = unitId;
             units[unitId].Add(participantId);
         }
 
         // כאן נבנה אובייקט הפלט הסופי של שלב זה.
-        // המחלקה MandatoryUnitMap מוגדרת בקובץ נפרד
-        // ומשמשת אחר כך בשלבי גרף קונפליקטים, שיבוץ ותיקון.
+
         return new MandatoryUnitMap(unitIdByParticipant, units);
     }
 
@@ -122,7 +100,9 @@ public static class MandatoryGroupBuilder
     }
 
     /// <summary>
-    /// מוצא את שורש הקבוצה של משתתף, עם דחיסת נתיב.
+    /// תפקיד הפונקציה: מוצאת שורש הקבוצה ב-Union-Find — עם דחיסת נתיב.
+    /// קלט עיקרי: מילון הורים, מזהה משתתף.
+    /// פלט עיקרי: מזהה שורש היחידה.
     /// </summary>
     private static ParticipantId Find(IDictionary<ParticipantId, ParticipantId> parentByParticipant, ParticipantId participantId)
     {
@@ -146,7 +126,9 @@ public static class MandatoryGroupBuilder
     }
 
     /// <summary>
-    /// מאחד שתי קבוצות משתתפים לאותה יחידת חובה.
+    /// תפקיד הפונקציה: מאחדת שתי קבוצות משתתפים ליחידת חובה אחת.
+    /// קלט עיקרי: מילון הורים ושני מזהי משתתפים.
+    /// פלט עיקרי: עדכון in-place של מבנה Union-Find.
     /// </summary>
     private static void Union(
         IDictionary<ParticipantId, ParticipantId> parentByParticipant,

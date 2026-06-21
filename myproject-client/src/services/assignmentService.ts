@@ -1,4 +1,4 @@
-import { authFetch } from './apiClient'
+import { authFetch, SessionExpiredError } from './apiClient'
 
 export interface AssignmentSummary {
   assignmentId: number
@@ -32,7 +32,7 @@ export async function fetchAssignments(): Promise<AssignmentSummary[]> {
   } catch (error) {
     if (error instanceof Error && error.message === 'NETWORK_ERROR') {
       throw new AssignmentsConnectionError(
-        'לא ניתן להתחבר לשרת. ודאי שה-API רץ על localhost:5256 וש-Vite רץ (npm run dev).',
+        'לא ניתן להתחבר לשרת. ודאי שה-API רץ בפרופיל https (localhost:7044) וש-Vite רץ (npm run dev).',
       )
     }
 
@@ -92,10 +92,38 @@ export async function importAssignmentFromExcel(
     formData.append('maxGroupSize', String(options.maxGroupSize))
   }
 
-  const response = await authFetch('/api/assignments/import', {
-    method: 'POST',
-    body: formData,
-  })
+  let response: Response
+
+  try {
+    response = await authFetch('/api/assignments/import', {
+      method: 'POST',
+      body: formData,
+    })
+  } catch (error) {
+    if (error instanceof SessionExpiredError) {
+      return {
+        success: false,
+        participantCount: 0,
+        mandatoryPairCount: 0,
+        forbiddenPairCount: 0,
+        classificationRuleCount: 0,
+        errors: ['נדרשת התחברות מחדש.'],
+      }
+    }
+
+    if (error instanceof Error && error.message === 'NETWORK_ERROR') {
+      return {
+        success: false,
+        participantCount: 0,
+        mandatoryPairCount: 0,
+        forbiddenPairCount: 0,
+        classificationRuleCount: 0,
+        errors: ['לא ניתן להתחבר לשרת. ודאי שה-API רץ בפרופיל https (localhost:7044).'],
+      }
+    }
+
+    throw error
+  }
 
   let data: AssignmentImportResponse
   try {
@@ -137,6 +165,7 @@ export interface CreateFromParticipantsPayload {
     participantId: string
     displayName?: string | null
     classifications: Record<string, string>
+    preferences?: string[]
   }>
 }
 

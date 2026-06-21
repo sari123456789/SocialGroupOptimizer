@@ -19,6 +19,7 @@ public sealed class ClassificationHomogeneousGroupConstraint : IConstraint
     private readonly HashSet<ClassificationLevelCode> _dimensionLevels;
     private readonly IReadOnlyDictionary<ParticipantId, IReadOnlyDictionary<ClassificationDimensionCode, ClassificationLevelCode>> _participantClassifications;
 
+    /// <summary>מגדיר מימד להפרדה ומפת סיווגים לכל המשתתפים.</summary>
     public ClassificationHomogeneousGroupConstraint(
         ClassificationDimensionCode targetDimension,
         IEnumerable<ClassificationLevelCode> dimensionLevels,
@@ -43,6 +44,8 @@ public sealed class ClassificationHomogeneousGroupConstraint : IConstraint
 
     public ConstraintType Type => ConstraintType.ClassificationHomogeneousGroup;
 
+    /// <inheritdoc/>
+    /// <remarks>בכל קבוצה — כל המשתתפים חייבים לשתף את אותה רמת ערך במימד הנבחר.</remarks>
     public bool IsSatisfied(Assignment assignment)
     {
         foreach (var group in assignment.Groups)
@@ -66,11 +69,11 @@ public sealed class ClassificationHomogeneousGroupConstraint : IConstraint
 
                 if (groupLevel is null)
                 {
-                    groupLevel = level;
+                    groupLevel = level; // רמת הייחוס הראשונה בקבוצה
                 }
                 else if (groupLevel.Value != level.Value)
                 {
-                    return false;
+                    return false; // רמה שונה — הפרדה נשברה
                 }
             }
         }

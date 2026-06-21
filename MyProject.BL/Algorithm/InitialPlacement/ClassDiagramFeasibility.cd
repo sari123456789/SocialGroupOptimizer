@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.FeasibilityPreChecker">
+    <Position X="4.75" Y="2" Width="3.5" />
+    <TypeIdentifier>
+      <HashCode>AAAQABgAABAAABAQAAQAAAAAQgAAAAAAAAEAIEABAAI=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Feasibility\FeasibilityPreChecker.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.FeasibilityPreCheckResult">
+    <Position X="8.5" Y="2" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAAEAAQAAAAAAAAAAAAAAIAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Feasibility\FeasibilityPreCheckResult.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Enum Name="MyProject.BL.Algorithm.InitialPlacement.FeasibilityPreCheckStatus">
+    <Position X="8.5" Y="4.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAEAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Feasibility\FeasibilityPreCheckStatus.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

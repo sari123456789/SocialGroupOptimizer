@@ -15,11 +15,11 @@ public sealed class LocalSearchInput
     /// יוצר קלט חיפוש מקומי.
     /// </summary>
     public LocalSearchInput(
-        AssignmentState initialState,
-        IReadOnlyList<Participant> participants,
-        IReadOnlyList<IConstraint> constraints,
-        ScoringWeights scoringWeights,
-        Score? initialScore = null)
+        AssignmentState initialState, // מצב התחלתי — מתעדכן in-place במהלך החיפוש
+        IReadOnlyList<Participant> participants, // כל המשתתפים — ל-RuntimeDataBuilder ולהערכה
+        IReadOnlyList<IConstraint> constraints, // אילוצים — מועברים להערכת מועמדים
+        ScoringWeights scoringWeights, // משקלות ניקוד — ל
+        Score? initialScore = null) // ציון התחלתי לתיעוד — אם 
     {
         InitialState = initialState ?? throw new ArgumentNullException(nameof(initialState));
         Participants = participants ?? throw new ArgumentNullException(nameof(participants));

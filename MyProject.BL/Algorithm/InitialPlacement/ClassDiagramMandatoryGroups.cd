@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.MandatoryGroupBuilder">
+    <Position X="6.5" Y="2.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAIgACAAAAAAQAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\MandatoryGroups\MandatoryGroupBuilder.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.MandatoryUnitMap">
+    <Position X="9" Y="2.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAEAAAgAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\MandatoryGroups\MandatoryUnitMap.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

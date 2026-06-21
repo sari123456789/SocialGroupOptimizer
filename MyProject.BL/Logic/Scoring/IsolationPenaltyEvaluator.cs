@@ -6,9 +6,10 @@ using MyProject.Core.Domain.ValueObjects;
 namespace MyProject.BL.Logic.Scoring;
 
 /// <summary>
-/// מזהה משתתפים מבודדים חברתית ומחשב קנס מצטבר.
+/// תפקיד המחלקה: מדד עזר לזיהוי בידוד חברתי וחישוב קנס.
+/// מדד תומך — אינו חלק מהציון הסופי הראשי (ScoringManager לא משתמש בו כרגע).
 /// </summary>
-/// <remarks>נקרא מ-: <see cref="ScoringManager"/> בלבד.</remarks>
+/// <remarks>נקרא מ-: <see cref="ScoringManager"/> בלבד — שמור לשימוש עתידי.</remarks>
 public sealed class IsolationPenaltyEvaluator
 {
     /// <summary>

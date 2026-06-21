@@ -1,6 +1,21 @@
+import { ParticipantNameWithId } from '../participants/ParticipantNameWithId'
 import type { InitialPlacementResponse } from '../../services/initialPlacementService'
+import type { ParticipantListItem } from '../../services/participantsService'
 
-export function PlacementResult({ result }: { result: InitialPlacementResponse }) {
+interface PlacementResultProps {
+  result: InitialPlacementResponse
+  participants?: ParticipantListItem[]
+  onExplain?: (participantId: string) => void
+}
+
+export function PlacementResult({
+  result,
+  participants = [],
+  onExplain,
+}: PlacementResultProps) {
+  const participantById = new Map(
+    participants.map((participant) => [participant.participantId, participant]),
+  )
   return (
     <div className="mt-6 space-y-4">
       <p className="rounded-lg bg-slate-50 px-4 py-3 text-sm">
@@ -17,10 +32,30 @@ export function PlacementResult({ result }: { result: InitialPlacementResponse }
               <h3 className="font-semibold text-slate-900">
                 קבוצה {group.groupId}
               </h3>
-              <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                {group.participantIds.map((participantId) => (
-                  <li key={participantId}>{participantId}</li>
-                ))}
+              <ul className="mt-2 space-y-2 text-sm text-slate-700">
+                {group.participantIds.map((participantId) => {
+                  const participant = participantById.get(participantId)
+                  return (
+                    <li
+                      key={participantId}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <ParticipantNameWithId
+                        participantId={participantId}
+                        displayName={participant?.displayName}
+                      />
+                      {onExplain && (
+                        <button
+                          type="button"
+                          onClick={() => onExplain(participantId)}
+                          className="shrink-0 rounded-lg border border-indigo-200 px-2 py-1 text-xs font-medium text-indigo-700 hover:bg-indigo-50"
+                        >
+                          הסבר שיבוץ
+                        </button>
+                      )}
+                    </li>
+                  )
+                })}
               </ul>
             </article>
           ))}

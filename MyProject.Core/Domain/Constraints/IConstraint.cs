@@ -6,6 +6,7 @@ namespace MyProject.Core.Domain.Constraints;
 /// <summary>
 /// חוזה לאילוץ קשה לאימות פתרון הקצאה.
 /// </summary>
+/// <remarks>כל האילוצים חייבים להתקיים יחד — אין "אילוץ רך" ברמת Core.</remarks>
 public interface IConstraint
 {
     /// <summary>

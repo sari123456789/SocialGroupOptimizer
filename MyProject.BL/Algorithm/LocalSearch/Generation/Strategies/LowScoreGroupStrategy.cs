@@ -6,7 +6,8 @@ using MyProject.BL.Algorithm.SolutionState;
 namespace MyProject.BL.Algorithm.LocalSearch.Generation.Strategies;
 
 /// <summary>
-/// אסטרטגיית קבוצות חלשות.
+/// תפקיד המחלקה: אסטרטגיית קבוצות חלשות — מזהה קבוצות עם סכום גבוה של העדפות לא ממומשות.
+/// המחלקה משתתפת בשלב יצירת מועמדים — מנסה לשפר קבוצות בעלות חולשה גבוהה.
 /// </summary>
 public sealed class LowScoreGroupStrategy : IMoveCandidateStrategy
 {

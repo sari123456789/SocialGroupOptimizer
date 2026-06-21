@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Evaluation.MoveEvaluationBatch" BaseTypeListCollapsed="true">
+    <Position X="1" Y="1" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAQAAAAAAAAAAAAAAAAAAMAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Evaluation\MoveEvaluationBatch.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Evaluation.MoveEvaluationContext">
+    <Position X="5.5" Y="1" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAQAAAAAAAgAAAAAAAAAABAAACAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Evaluation\MoveEvaluationContext.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Evaluation.MoveEvaluationResult">
+    <Position X="3.25" Y="1" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAgAAQBgEAAAAAgAACgAAAAAAAAACAAACAAABAAAAAY=</HashCode>
+      <FileName>Algorithm\LocalSearch\Evaluation\MoveEvaluationResult.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Evaluation.MoveEvaluator" BaseTypeListCollapsed="true">
+    <Position X="7.75" Y="2.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAACgAAAAAAAAAAAAAAAAAAIAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Evaluation\MoveEvaluator.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Interface Name="MyProject.BL.Algorithm.LocalSearch.Evaluation.IMoveEvaluationBatch">
+    <Position X="1" Y="3.25" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Evaluation\IMoveEvaluationBatch.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="MyProject.BL.Algorithm.LocalSearch.Evaluation.IMoveEvaluator">
+    <Position X="5.5" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Evaluation\IMoveEvaluator.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

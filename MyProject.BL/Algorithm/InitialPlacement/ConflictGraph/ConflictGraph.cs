@@ -1,11 +1,11 @@
 namespace MyProject.BL.Algorithm.InitialPlacement;
 
 /// <summary>
-/// תפקיד: גרף קונפליקטים לא-מכוון בין יחידות חובה — קשת = זוג איסור בין שתי יחידות.
+/// תפקיד המחלקה: גרף קונפליקטים לא-מכוון בין יחידות חובה.
+/// המחלקה משתתפת בשלב ניתוח קושי, שיבוץ ופותר אילוצים.
 /// </summary>
 /// <remarks>
-/// נבנה ע"י <see cref="ConflictGraphBuilder.Build"/>.
-/// נצרך ע"י ProblemDifficultyAnalyzer, SolverInputBuilder, ISolverFallback.
+/// מימוש Adjacency List — רשימת שכנויות: לכל יחידה HashSet של יחידות אסורות.
 /// </remarks>
 public sealed class ConflictGraph
 {

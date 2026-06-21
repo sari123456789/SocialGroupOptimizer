@@ -14,6 +14,14 @@ export interface SelectedParticipantPayload {
   participantId: string
   displayName?: string | null
   classifications: Record<string, string>
+  preferences?: string[]
+}
+
+function mapPreferences(participant: ParticipantListItem): string[] {
+  return (participant.preferences ?? [])
+    .slice()
+    .sort((left, right) => left.rank - right.rank)
+    .map((preference) => preference.participantId)
 }
 
 interface CreateAssignmentParticipantPickerProps {
@@ -110,6 +118,7 @@ export function CreateAssignmentParticipantPicker({
           participantId: participant.participantId,
           displayName: participant.displayName,
           classifications: { ...participant.classifications },
+          preferences: mapPreferences(participant),
         })
       }
 
@@ -167,6 +176,7 @@ export function CreateAssignmentParticipantPicker({
             participantId: participant.participantId,
             displayName: participant.displayName,
             classifications: { ...participant.classifications },
+            preferences: mapPreferences(participant),
           })
         }
       }

@@ -9,7 +9,7 @@ namespace MyProject.BL.Algorithm.Initialization;
 /// </summary>
 /// <remarks>
 /// <para>תפקיד: גשר בין תוצאת Initial Placement (Assignment ב-Core) לבין מבנה מצב החיפוש המקומי.</para>
-/// <para>נקרא מ-: מתזמר Local Search עתידי — אין שימוש חיצוני כרגע; נקודת כניסה לבניית מצב ראשוני לפני לולאת החיפוש.</para>
+/// <para>נקרא מ-: מתזמר Local Search  נקודת כניסה לבניית מצב ראשוני לפני לולאת החיפוש.</para>
 /// </remarks>
 public static class AssignmentStateFactory
 {
@@ -19,7 +19,7 @@ public static class AssignmentStateFactory
     /// <param name="assignment">חלוקה מ-Initial Placement — כל משתתף מופיע בקבוצה אחת בלבד.</param>
     /// <returns>מצב חלוקה עם מיפויים, hash ראשוני וציון 0.</returns>
     /// <remarks>
-    /// <para>נקרא מ-: מתזמר Local Search עתידי — אין קריאות חיצוניות כרגע.</para>
+    /// <para>נקרא מ-: מתזמר Local Search</para>
     /// </remarks>
     public static AssignmentState CreateFromAssignment(Assignment assignment)
     {
@@ -28,8 +28,8 @@ public static class AssignmentStateFactory
             throw new ArgumentNullException(nameof(assignment));
         }
 
-        var participantToGroup = new Dictionary<ParticipantId, GroupId>();
-        var groupToParticipants = new Dictionary<GroupId, List<ParticipantId>>();
+        var participantToGroup = new Dictionary<ParticipantId, GroupId>(); //משתתף לקבוצה
+        var groupToParticipants = new Dictionary<GroupId, List<ParticipantId>>();//קבוצה למשתתפים
 
         foreach (var group in assignment.Groups)
         {
@@ -54,7 +54,9 @@ public static class AssignmentStateFactory
             }
         }
 
-        // hash ראשוני מהמיפוי; ציון 0 — יוחלף ב-scoring בחיפוש המקומי.
+
+        // מחשב Hash ראשוני לפי מיפוי המשתתפים לקבוצות.
+        // הציון מאותחל ל-0 בלבד כערך זמני, ובהמשך מנגנון הניקוד מחשב ומעדכן את הציון האמיתי של החלוקה.
         var initialHash = AssignmentHash.ComputeFromState(participantToGroup);
         var initialScore = new Score(0);
 

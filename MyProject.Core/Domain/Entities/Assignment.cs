@@ -35,11 +35,13 @@ public sealed class Assignment
             throw new ArgumentException("Assignment groups cannot contain null entries.", nameof(groups));
         }
 
+        // כל קבוצה מזוהה ב-GroupId ייחודי — אין שתי קבוצות עם אותו מספר.
         if (groupList.Select(g => g.Id).Distinct().Count() != groupList.Count)
         {
             throw new ArgumentException("Assignment cannot contain duplicate group ids.", nameof(groups));
         }
 
+        // אינווריאנט מרכזי: משתתף מופיע לכל היותר בקבוצה אחת.
         var allParticipants = groupList.SelectMany(g => g.ParticipantIds).ToList();
         if (allParticipants.Distinct().Count() != allParticipants.Count)
         {

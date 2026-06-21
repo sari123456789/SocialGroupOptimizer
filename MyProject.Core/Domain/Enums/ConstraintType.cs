@@ -21,11 +21,6 @@ public enum ConstraintType
     CannotLink = 3,
 
     /// <summary>
-    /// אילוץ על איזון/חלוקת סיווגים בין קבוצות.
-    /// </summary>
-    ClassificationBalance = 4,
-
-    /// <summary>
     /// אילוץ על מספר הקבוצות הנדרש בהקצאה.
     /// </summary>
     GroupCount = 5,

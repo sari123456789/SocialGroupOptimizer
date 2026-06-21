@@ -12,11 +12,30 @@ namespace MyProject.API.Placement;
 /// <remarks>
 /// נקרא מ-: <see cref="AssignmentsController"/> (כל endpoint של PUT/POST/DELETE על חלוקה, משתתפים ואילוצים).
 /// </remarks>
+/// <remarks>
+/// זוהי מחלקת השירות המרכזית לעריכת חלוקה קיימת. היא מקבלת בקשות שכבר עברו
+/// דרך AssignmentsController, מבצעת בדיקות תקינות והרשאה, משנה את הנתונים
+/// בבסיס הנתונים, ואז מפעילה אימות מחדש של החלוקה. בצורה זו כל שינוי
+/// משמעותי - משתתפים, אילוצים, סיווגים, העדפות או הגדרות קבוצות - משאיר
+/// את מצב החלוקה מעודכן ועקבי.
+///
+/// המחלקה אינה מחזירה ישויות EF ישירות ללקוח. לאחר השמירה היא משתמשת
+/// ב-AssignmentDetailLoader כדי להחזיר DTO מלא ומעודכן. כך צד הלקוח מקבל
+/// תמיד תמונת מצב אחת, אחידה וברורה לאחר כל פעולה.
+///
+/// אחריות המחלקה היא ניהולית: היא אינה מממשת את אלגוריתם השיבוץ, אבל היא
+/// מכינה ושומרת את הנתונים שעליהם האלגוריתם יעבוד בהרצה הבאה.
+/// </remarks>
+// השירות הראשי לעריכת חלוקה קיימת
 public sealed class AssignmentEditorService
 {
+ 
     private readonly ApplicationDbContext _db;
+ 
     private readonly AssignmentPlacementLoader _assignmentLoader;
+    // טוען פירוט מלא אחרי שינוי
     private readonly AssignmentDetailLoader _detailLoader;
+    // מאמת את החלוקה מחדש אחרי כל עריכה
     private readonly AssignmentInitialPlacementValidator _validator;
 
     /// <summary>
@@ -32,9 +51,13 @@ public sealed class AssignmentEditorService
         AssignmentDetailLoader detailLoader,
         AssignmentInitialPlacementValidator validator)
     {
+  
         _db = db ?? throw new ArgumentNullException(nameof(db));
+        // שומרים את בודק ההרשאות
         _assignmentLoader = assignmentLoader ?? throw new ArgumentNullException(nameof(assignmentLoader));
+        // שומרים את טוען הפירוט
         _detailLoader = detailLoader ?? throw new ArgumentNullException(nameof(detailLoader));
+        // שומרים את המאמת
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
     }
 
@@ -55,57 +78,69 @@ public sealed class AssignmentEditorService
         UpdateAssignmentRequest request,
         CancellationToken cancellationToken = default)
     {
-        // ===== שלב 1: אימות הגדרות =====
+        //  שלב 1: אימות הגדרות 
         // ValidateSettings — בדיקות סטטיות על Min/Max קבוצות וגודל; ללא גישה ל-DB.
         var errors = ValidateSettings(request.Settings);
+        // אם יש שגיאות בהגדרות מחזירים מיד
         if (errors.Count > 0)
         {
+            // מחזירים את רשימת השגיאות ללקוח
             return AssignmentEditResult.Fail(errors);
         }
 
-        // ===== שלב 2: הרשאה =====
-        // AssignmentBelongsToManagerAsync — JOIN Assignment↔Manager; false = חלוקה לא נמצאה.
+        //  שלב 2: הרשאה 
+        // חייב שהחלוקה שייכת למנהל — אחרת אין הרשאה לבצע עדכון.
         if (!await _assignmentLoader.AssignmentBelongsToManagerAsync(assignmentId, managerId, cancellationToken))
         {
+            // אין הרשאה או שהחלוקה לא קיימת
             return AssignmentEditResult.Fail("החלוקה לא נמצאה.");
         }
 
-        // ===== שלב 3: טעינת רשומת החלוקה =====
+        //  שלב 3: טעינת רשומת החלוקה 
         var assignment = await _db.Assignments
             .FirstOrDefaultAsync(entry => entry.AssignmentId == assignmentId, cancellationToken);
 
+        // אם אין רשומה במסד
         if (assignment is null)
         {
+            // לא מצאנו את הרשומה
             return AssignmentEditResult.Fail("החלוקה לא נמצאה.");
         }
 
-        // ===== שלב 4: עדכון שם (אופציונלי) =====
+        //  שלב 4: עדכון שם (אופציונלי) 
         if (!string.IsNullOrWhiteSpace(request.AssignmentName))
         {
+            // מעדכנים את השם אחרי חיתוך רווחים
             assignment.AssignmentName = request.AssignmentName.Trim();
         }
 
-        // ===== שלב 5: עדכון הגדרות קבוצות (אופציונלי) =====
+        //   שלב 5: עדכון הגדרות קבוצות  
         if (request.Settings is not null)
         {
             // ספירת משתתפים — נדרשת לבדיקת קיבולת לפני שינוי Min/Max.
             var participantCount = await _db.ParticipantAssignments
                 .CountAsync(entry => entry.AssignmentId == assignmentId, cancellationToken);
 
+            // בודקים שהמספרים מתאימים לכמות המשתתפים
             var capacityError = ValidateCapacity(request.Settings, participantCount);
             if (capacityError is not null)
             {
+                // הקיבולת לא מתאימה למספר המשתתפים
                 return AssignmentEditResult.Fail(capacityError);
             }
 
+            // מעדכנים מינימום ומקסימום קבוצות
             await UpdateGroupCountAsync(assignmentId, request.Settings, cancellationToken);
+            // מעדכנים גודל קבוצה לכל קבוצה
             await UpdateGroupSizesAsync(assignmentId, request.Settings, cancellationToken);
         }
 
-        // ===== שלב 6: שמירה + החזרת פירוט =====
+        //   שלב 6: שמירה + החזרת פירוט  
         await _db.SaveChangesAsync(cancellationToken);
 
+        // מאמתים וטוענים את הפירוט המעודכן
         var detail = await FinishWithValidationAsync(assignmentId, managerId, cancellationToken);
+        // מחזירים הצלחה עם פירוט או שגיאה
         return detail is null
             ? AssignmentEditResult.Fail("החלוקה לא נמצאה.")
             : AssignmentEditResult.Ok(detail);
@@ -128,24 +163,28 @@ public sealed class AssignmentEditorService
         AddParticipantRequest request,
         CancellationToken cancellationToken = default)
     {
-        // ===== שלב 1: נרמול ואימות ת.ז. =====
+        //  שלב 1: נרמול ואימות ת.ז. 
         if (!TryNormalizeIdentity(request.ParticipantId, out var identity, out var identityError))
         {
+            // ת.ז. לא תקינה
             return AssignmentEditResult.Fail($"תעודת זהות {identityError}.");
         }
 
+        // חייב להיות לפחות סיווג אחד
         if (request.Classifications.Count == 0)
         {
+            // בלי סיווגים אי אפשר להוסיף משתתף
             return AssignmentEditResult.Fail("יש להגדיר לפחות סיווג אחד.");
         }
 
-        // ===== שלב 2: הרשאה =====
+        //   שלב 2: הרשאה  
         if (!await _assignmentLoader.AssignmentBelongsToManagerAsync(assignmentId, managerId, cancellationToken))
         {
+            // אין הרשאה לחלוקה
             return AssignmentEditResult.Fail("החלוקה לא נמצאה.");
         }
 
-        // ===== שלב 3: בדיקת כפילות בחלוקה =====
+        //   שלב 3: בדיקת כפילות בחלוקה  
         // JOIN דרך subquery — מוודא שאין כבר משתתף עם אותה ת.ז. בחלוקה זו.
         var alreadyInAssignment = await _db.ParticipantAssignments
             .AnyAsync(
@@ -157,10 +196,25 @@ public sealed class AssignmentEditorService
 
         if (alreadyInAssignment)
         {
+            // כבר יש מישהו עם אותה ת.ז. בחלוקה
             return AssignmentEditResult.Fail("משתתף עם תעודת זהות זו כבר קיים בחלוקה.");
         }
 
-        // ===== שלב 4: מציאה או יצירת Participant גלובלי =====
+        //   שלב 4: מציאה או יצירת Participant גלובלי  
+        // בודקים שההעדפות החברתיות תקינות
+        var preferenceValidation = await ValidatePreferenceIdsAsync(
+            assignmentId,
+            identity,
+            request.Preferences,
+            cancellationToken);
+
+        if (preferenceValidation.Errors.Count > 0)
+        {
+            // יש בעיה ברשימת ההעדפות
+            return AssignmentEditResult.Fail(preferenceValidation.Errors);
+        }
+
+        // מחפשים משתתף קיים לפי ת.ז.
         var participant = await _db.Participants
             .FirstOrDefaultAsync(entry => entry.IsraeliIdentityNumber == identity, cancellationToken);
 
@@ -172,6 +226,7 @@ public sealed class AssignmentEditorService
                 IsraeliIdentityNumber = identity,
                 ParticipantName = string.IsNullOrWhiteSpace(request.DisplayName) ? null : request.DisplayName.Trim(),
             };
+            // מוסיפים למסד ושומרים כדי לקבל מזהה
             _db.Participants.Add(participant);
             await _db.SaveChangesAsync(cancellationToken);
         }
@@ -181,7 +236,8 @@ public sealed class AssignmentEditorService
             participant.ParticipantName = request.DisplayName.Trim();
         }
 
-        // ===== שלב 5: שיוך לחלוקה =====
+        //   שלב 5: שיוך לחלוקה  
+        // יוצרים רשומת שיוך חדשה
         var participantAssignment = new ParticipantAssignment
         {
             ParticipantId = participant.ParticipantId,
@@ -189,10 +245,11 @@ public sealed class AssignmentEditorService
             ManagerId = managerId,
         };
 
+        // מוסיפים את השיוך למסד
         _db.ParticipantAssignments.Add(participantAssignment);
         await _db.SaveChangesAsync(cancellationToken);
 
-        // ===== שלב 6: החלת סיווגים =====
+        //   שלב 6: החלת סיווגים  
         var classificationError = await ApplyClassificationsAsync(
             participantAssignment.ParticipantAssignmentId,
             request.Classifications,
@@ -200,12 +257,20 @@ public sealed class AssignmentEditorService
 
         if (classificationError is not null)
         {
+            // הסיווגים לא עברו אימות
             return AssignmentEditResult.Fail(classificationError);
         }
 
+        // שומרים את ההעדפות החברתיות החדשות
+        await ReplaceSocialPreferencesForParticipantAsync(
+            assignmentId,
+            participantAssignment.ParticipantAssignmentId,
+            preferenceValidation.TargetParticipantAssignmentIds,
+            cancellationToken);
+
         await _db.SaveChangesAsync(cancellationToken);
 
-        // ===== שלב 7: אימות + החזרת פירוט =====
+        //   שלב 7: אימות + החזרת פירוט  
         var detail = await FinishWithValidationAsync(assignmentId, managerId, cancellationToken);
         return detail is null
             ? AssignmentEditResult.Fail("החלוקה לא נמצאה.")
@@ -231,13 +296,13 @@ public sealed class AssignmentEditorService
         UpdateParticipantRequest request,
         CancellationToken cancellationToken = default)
     {
-        // ===== שלב 1: נרמול ת.ז. =====
+        //   שלב 1: נרמול ת.ז.  
         if (!TryNormalizeIdentity(rawIdentity, out var identity, out var identityError))
         {
             return AssignmentEditResult.Fail($"תעודת זהות {identityError}.");
         }
 
-        // ===== שלב 2: מציאת שיוך משתתף↔חלוקה =====
+        //   שלב 2: מציאת שיוך משתתף חלוקה  
         var participantAssignment = await FindParticipantAssignmentAsync(
             assignmentId,
             managerId,
@@ -249,9 +314,28 @@ public sealed class AssignmentEditorService
             return AssignmentEditResult.Fail("המשתתף לא נמצא בחלוקה.");
         }
 
-        // ===== שלב 3: עדכון שם תצוגה (אופציונלי) =====
+        //   שלב 3: עדכון שם תצוגה    
+        List<int>? targetPreferenceAssignmentIds = null;
+        if (request.Preferences is not null)
+        {
+            // בודקים שההעדפות תקינות לפני שמירה
+            var preferenceValidation = await ValidatePreferenceIdsAsync(
+                assignmentId,
+                identity,
+                request.Preferences,
+                cancellationToken);
+
+            if (preferenceValidation.Errors.Count > 0)
+            {
+                return AssignmentEditResult.Fail(preferenceValidation.Errors);
+            }
+
+            targetPreferenceAssignmentIds = preferenceValidation.TargetParticipantAssignmentIds;
+        }
+
         if (request.DisplayName is not null)
         {
+            // טוענים את רשומת המשתתף לעדכון שם
             var participant = await _db.Participants
                 .FirstAsync(entry => entry.ParticipantId == participantAssignment.ParticipantId, cancellationToken);
 
@@ -261,7 +345,7 @@ public sealed class AssignmentEditorService
                 : request.DisplayName.Trim();
         }
 
-        // ===== שלב 4: החלפת סיווגים (אופציונלי) =====
+        //   שלב 4: החלפת סיווגים   
         if (request.Classifications is not null)
         {
             if (request.Classifications.Count == 0)
@@ -285,6 +369,15 @@ public sealed class AssignmentEditorService
             {
                 return AssignmentEditResult.Fail(classificationError);
             }
+        }
+
+        if (targetPreferenceAssignmentIds is not null)
+        {
+            await ReplaceSocialPreferencesForParticipantAsync(
+                assignmentId,
+                participantAssignment.ParticipantAssignmentId,
+                targetPreferenceAssignmentIds,
+                cancellationToken);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
@@ -312,13 +405,13 @@ public sealed class AssignmentEditorService
         string rawIdentity,
         CancellationToken cancellationToken = default)
     {
-        // ===== שלב 1: נרמול ת.ז. =====
+        //   שלב 1: נרמול ת.ז.  
         if (!TryNormalizeIdentity(rawIdentity, out var identity, out var identityError))
         {
             return AssignmentEditResult.Fail($"תעודת זהות {identityError}.");
         }
 
-        // ===== שלב 2: מציאת שיוך =====
+        //   שלב 2: מציאת שיוך  
         var participantAssignment = await FindParticipantAssignmentAsync(
             assignmentId,
             managerId,
@@ -330,14 +423,15 @@ public sealed class AssignmentEditorService
             return AssignmentEditResult.Fail("המשתתף לא נמצא בחלוקה.");
         }
 
+        // שומרים את המזהה לפני מחיקת השיוך
         var participantAssignmentId = participantAssignment.ParticipantAssignmentId;
 
-        // ===== שלב 3: ניקוי תלויות =====
+        //   שלב 3: ניקוי תלויות     
         // אילוצי זוג ו-SocialPreferences מצביעים על ParticipantAssignmentId — חייבים למחוק לפני השיוך.
         await RemovePairConstraintsForParticipantAsync(assignmentId, participantAssignmentId, cancellationToken);
         await RemoveSocialPreferencesForParticipantAsync(assignmentId, participantAssignmentId, cancellationToken);
 
-        // ===== שלב 4: מחיקת השיוך =====
+        //   שלב 4: מחיקת השיוך  
         _db.ParticipantAssignments.Remove(participantAssignment);
         await _db.SaveChangesAsync(cancellationToken);
 
@@ -364,6 +458,7 @@ public sealed class AssignmentEditorService
         AddPairConstraintRequest request,
         CancellationToken cancellationToken = default)
     {
+        // מפנה ללוגיקה המשותפת עם דגל חובה
         return await AddPairAsync(
             assignmentId,
             managerId,
@@ -389,6 +484,7 @@ public sealed class AssignmentEditorService
         AddPairConstraintRequest request,
         CancellationToken cancellationToken = default)
     {
+        // מפנה ללוגיקה המשותפת עם דגל איסור
         return await AddPairAsync(
             assignmentId,
             managerId,
@@ -414,13 +510,13 @@ public sealed class AssignmentEditorService
         int constraintId,
         CancellationToken cancellationToken = default)
     {
-        // ===== שלב 1: הרשאה =====
+        //   שלב 1: הרשאה  
         if (!await _assignmentLoader.AssignmentBelongsToManagerAsync(assignmentId, managerId, cancellationToken))
         {
             return AssignmentEditResult.Fail("החלוקה לא נמצאה.");
         }
 
-        // ===== שלב 2: מציאת האילוץ =====
+        //   שלב 2: מציאת האילוץ  
         var row = await _db.MandatoryPairConstraints
             .FirstOrDefaultAsync(
                 entry => entry.MandatoryPairConstraintId == constraintId
@@ -432,7 +528,7 @@ public sealed class AssignmentEditorService
             return AssignmentEditResult.Fail("האילוץ לא נמצא.");
         }
 
-        // ===== שלב 3: מחיקה + החזרת פירוט =====
+        //   שלב 3: מחיקה + החזרת פירוט  
         _db.MandatoryPairConstraints.Remove(row);
         await _db.SaveChangesAsync(cancellationToken);
 
@@ -459,13 +555,13 @@ public sealed class AssignmentEditorService
         int constraintId,
         CancellationToken cancellationToken = default)
     {
-        // ===== שלב 1: הרשאה =====
+        //   שלב 1: הרשאה  
         if (!await _assignmentLoader.AssignmentBelongsToManagerAsync(assignmentId, managerId, cancellationToken))
         {
             return AssignmentEditResult.Fail("החלוקה לא נמצאה.");
         }
 
-        // ===== שלב 2: מציאת האילוץ =====
+        //   שלב 2: מציאת האילוץ  
         var row = await _db.ForbiddenPairConstraints
             .FirstOrDefaultAsync(
                 entry => entry.ForbiddenPairConstraintId == constraintId
@@ -477,7 +573,7 @@ public sealed class AssignmentEditorService
             return AssignmentEditResult.Fail("האילוץ לא נמצא.");
         }
 
-        // ===== שלב 3: מחיקה + החזרת פירוט =====
+        //   שלב 3: מחיקה + החזרת פירוט  
         _db.ForbiddenPairConstraints.Remove(row);
         await _db.SaveChangesAsync(cancellationToken);
 
@@ -504,7 +600,7 @@ public sealed class AssignmentEditorService
         AddClassificationConstraintRequest request,
         CancellationToken cancellationToken = default)
     {
-        // ===== שלב 1: אימות קלט =====
+        //  שלב 1: אימות קלט 
         if (string.IsNullOrWhiteSpace(request.DimensionCode))
         {
             return AssignmentEditResult.Fail("יש לציין מימד.");
@@ -515,13 +611,13 @@ public sealed class AssignmentEditorService
             return AssignmentEditResult.Fail("סוג אילוץ לא תקין. השתמשי ב-Balance או Separation.");
         }
 
-        // ===== שלב 2: הרשאה =====
+        //  שלב 2: הרשאה 
         if (!await _assignmentLoader.AssignmentBelongsToManagerAsync(assignmentId, managerId, cancellationToken))
         {
             return AssignmentEditResult.Fail("החלוקה לא נמצאה.");
         }
 
-        // ===== שלב 3: מציאת מימד במאגר המימדים =====
+        //  שלב 3: מציאת מימד במאגר המימדים     
         var trimmedDimensionCode = request.DimensionCode.Trim();
         var dimensions = await _db.ClassificationDimensions.ToListAsync(cancellationToken);
         var dimension = dimensions.FirstOrDefault(
@@ -532,7 +628,7 @@ public sealed class AssignmentEditorService
             return AssignmentEditResult.Fail($"מימד '{request.DimensionCode}' לא קיים.");
         }
 
-        // ===== שלב 4: בדיקת כפילות =====
+        //  שלב 4: בדיקת כפילות 
         var exists = await _db.AssignmentClassificationConstraints
             .AnyAsync(
                 entry => entry.AssignmentId == assignmentId
@@ -544,7 +640,7 @@ public sealed class AssignmentEditorService
             return AssignmentEditResult.Fail("אילוץ על מימד זה כבר קיים.");
         }
 
-        // ===== שלב 5: הוספה + שמירה =====
+        //  שלב 5: הוספה + שמירה 
         // IsBalanceOrSeparation=true → Balance; false → Separation.
         _db.AssignmentClassificationConstraints.Add(new AssignmentClassificationConstraint
         {
@@ -578,13 +674,13 @@ public sealed class AssignmentEditorService
         string dimensionCode,
         CancellationToken cancellationToken = default)
     {
-        // ===== שלב 1: הרשאה =====
+        //  שלב 1: הרשאה 
         if (!await _assignmentLoader.AssignmentBelongsToManagerAsync(assignmentId, managerId, cancellationToken))
         {
             return AssignmentEditResult.Fail("החלוקה לא נמצאה.");
         }
 
-        // ===== שלב 2: מציאת מימד =====
+        //  שלב 2: מציאת מימד 
         var dimensions = await _db.ClassificationDimensions.ToListAsync(cancellationToken);
         var dimension = dimensions.FirstOrDefault(
             entry => string.Equals(entry.DimensionCode, dimensionCode, StringComparison.OrdinalIgnoreCase));
@@ -594,7 +690,7 @@ public sealed class AssignmentEditorService
             return AssignmentEditResult.Fail("האילוץ לא נמצא.");
         }
 
-        // ===== שלב 3: מציאת שורת האילוץ =====
+        //  שלב 3: מציאת שורת האילוץ 
         var row = await _db.AssignmentClassificationConstraints
             .FirstOrDefaultAsync(
                 entry => entry.AssignmentId == assignmentId
@@ -606,7 +702,7 @@ public sealed class AssignmentEditorService
             return AssignmentEditResult.Fail("האילוץ לא נמצא.");
         }
 
-        // ===== שלב 4: מחיקה + החזרת פירוט =====
+        //  שלב 4: מחיקה + החזרת פירוט 
         _db.AssignmentClassificationConstraints.Remove(row);
         await _db.SaveChangesAsync(cancellationToken);
 
@@ -635,7 +731,7 @@ public sealed class AssignmentEditorService
         bool isMandatory,
         CancellationToken cancellationToken)
     {
-        // ===== שלב 1: נרמול ת.ז. של שני המשתתפים =====
+        //   שלב 1: נרמול ת.ז. של שני המשתתפים  
         if (!TryNormalizeIdentity(request.ParticipantA, out var identityA, out var errorA))
         {
             return AssignmentEditResult.Fail($"משתתף א: תעודת זהות {errorA}.");
@@ -646,6 +742,7 @@ public sealed class AssignmentEditorService
             return AssignmentEditResult.Fail($"משתתף ב: תעודת זהות {errorB}.");
         }
 
+        // לא יוצרים אילוץ של משתתף עם עצמו
         if (identityA == identityB)
         {
             return AssignmentEditResult.Fail("לא ניתן ליצור אילוץ בין משתתף לעצמו.");
@@ -666,6 +763,7 @@ public sealed class AssignmentEditorService
             return AssignmentEditResult.Fail("שני המשתתפים חייבים להיות רשומים בחלוקה.");
         }
 
+        // שומרים את מזהי השיוך לשימוש באילוץ
         var firstId = assignmentA.ParticipantAssignmentId;
         var secondId = assignmentB.ParticipantAssignmentId;
 
@@ -693,6 +791,7 @@ public sealed class AssignmentEditorService
         }
         else
         {
+            // בודקים שלא קיים כבר זוג איסור זהה
             var duplicate = await _db.ForbiddenPairConstraints.AnyAsync(
                 entry => entry.AssignmentId == assignmentId
                     && ((entry.FirstParticipantAssignmentId == firstId && entry.SecondParticipantAssignmentId == secondId)
@@ -721,7 +820,7 @@ public sealed class AssignmentEditorService
     }
 
     /// <summary>
-    /// מוצא שיוך משתתף↔חלוקה לפי ת.ז., אחרי בדיקת הרשאה.
+    /// מוצא שיוך משתתף-חלוקה לפי ת.ז., אחרי בדיקת הרשאה.
     /// </summary>
     /// <param name="assignmentId">מזהה חלוקה ב-DB.</param>
     /// <param name="managerId">מזהה המנהל — בדיקת הרשאה.</param>
@@ -737,6 +836,7 @@ public sealed class AssignmentEditorService
         string identity,
         CancellationToken cancellationToken)
     {
+        // בלי הרשאה לא מחזירים כלום
         if (!await _assignmentLoader.AssignmentBelongsToManagerAsync(assignmentId, managerId, cancellationToken))
         {
             return null;
@@ -773,6 +873,7 @@ public sealed class AssignmentEditorService
                     || entry.SecondParticipantAssignmentId == participantAssignmentId))
             .ToListAsync(cancellationToken);
 
+        // אותו דבר לזוגות איסור
         var forbidden = await _db.ForbiddenPairConstraints
             .Where(entry => entry.AssignmentId == assignmentId
                 && (entry.FirstParticipantAssignmentId == participantAssignmentId
@@ -797,6 +898,7 @@ public sealed class AssignmentEditorService
         int participantAssignmentId,
         CancellationToken cancellationToken)
     {
+        // מוצאים העדפות שהמשתתף שולח או מקבל
         var preferences = await _db.SocialPreferences
             .Where(entry => entry.AssignmentId == assignmentId
                 && (entry.FromParticipantAssignmentId == participantAssignmentId
@@ -815,11 +917,136 @@ public sealed class AssignmentEditorService
     /// <remarks>
     /// נקרא מ-: <see cref="UpdateAssignmentAsync"/>.
     /// </remarks>
+    /// <summary>
+    /// בודק וממיר רשימת העדפות חברתיות שהתקבלה מהלקוח.
+    /// </summary>
+    /// <remarks>
+    /// בצד הלקוח ההעדפות נשלחות כרשימת תעודות זהות לפי סדר דירוג. במסד
+    /// הנתונים SocialPreference שומר קשר בין ParticipantAssignmentId של
+    /// המשתתף המבקש לבין ParticipantAssignmentId של המשתתף המבוקש. לכן
+    /// המתודה מבצעת תרגום מזהות חיצונית למזהה שיוך פנימי.
+    ///
+    /// בנוסף מתבצעות בדיקות שמונעות מידע לא תקין: תעודת זהות לא תקינה,
+    /// העדפה עצמית, כפילות ברשימת ההעדפות והעדפה למשתתף שאינו שייך לחלוקה.
+    /// המתודה אינה שומרת למסד; היא רק מחזירה רשימת מזהי יעד תקינים או
+    /// רשימת שגיאות. ההפרדה מאפשרת לעצור את פעולת העריכה לפני כתיבה למסד.
+    /// </remarks>
+    private async Task<(List<int> TargetParticipantAssignmentIds, List<string> Errors)> ValidatePreferenceIdsAsync(
+        int assignmentId,
+        string sourceIdentity,
+        IReadOnlyList<string> preferenceIds,
+        CancellationToken cancellationToken)
+    {
+        // רשימות לשגיאות ולמזהי יעד תקינים
+        var errors = new List<string>();
+        var targetParticipantAssignmentIds = new List<int>();
+        // עוקבים אחרי כפילויות ברשימה
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        // אין העדפות — מחזירים ריק
+        if (preferenceIds.Count == 0)
+        {
+            return (targetParticipantAssignmentIds, errors);
+        }
+
+        // טוענים את כל המשתתפים בחלוקה עם ת.ז. ומזהה שיוך
+        var participantAssignmentRows = await (
+            from participantAssignment in _db.ParticipantAssignments
+            join participant in _db.Participants on participantAssignment.ParticipantId equals participant.ParticipantId
+            where participantAssignment.AssignmentId == assignmentId
+            select new
+            {
+                participant.IsraeliIdentityNumber,
+                participantAssignment.ParticipantAssignmentId,
+            })
+            .ToListAsync(cancellationToken);
+
+        // מילון לחיפוש מהיר לפי ת.ז.
+        var participantAssignmentIdByIdentity = participantAssignmentRows.ToDictionary(
+            entry => entry.IsraeliIdentityNumber,
+            entry => entry.ParticipantAssignmentId,
+            StringComparer.Ordinal);
+
+        // עוברים על כל העדפה מהלקוח
+        foreach (var rawPreferenceId in preferenceIds)
+        {
+            if (!TryNormalizeIdentity(rawPreferenceId, out var preferredIdentity, out var identityError))
+            {
+                errors.Add($"העדפה חברתית {identityError}: {rawPreferenceId}.");
+                continue;
+            }
+
+            // לא מאפשרים להעדיף את עצמו
+            if (preferredIdentity == sourceIdentity)
+            {
+                errors.Add("משתתף לא יכול להעדיף את עצמו.");
+                continue;
+            }
+
+            // בודקים שלא הופיעה אותה ת.ז. פעמיים
+            if (!seen.Add(preferredIdentity))
+            {
+                errors.Add($"העדפה חברתית כפולה עבור {preferredIdentity}.");
+                continue;
+            }
+
+            // מוודאים שהמשתתף המבוקש קיים בחלוקה
+            if (!participantAssignmentIdByIdentity.TryGetValue(preferredIdentity, out var targetParticipantAssignmentId))
+            {
+                errors.Add($"העדפה חברתית עבור {preferredIdentity} לא נמצאה ברשימת המשתתפים.");
+                continue;
+            }
+
+            targetParticipantAssignmentIds.Add(targetParticipantAssignmentId);
+        }
+
+        return (targetParticipantAssignmentIds, errors);
+    }
+
+    /// <summary>
+    /// מחליף את כל ההעדפות החברתיות היוצאות של משתתף מסוים.
+    /// </summary>
+    /// <remarks>
+    /// עריכת העדפות מתבצעת כ-replace מלא ולא כ-merge חלקי: מוחקים את ההעדפות
+    /// הישנות של המשתתף ומוסיפים מחדש את הרשימה בסדר שקיבלנו מהלקוח.
+    /// הסדר נשמר בשדה PreferenceWeight, שמשמש במערכת כ-Rank: הערך 1 מייצג
+    /// העדפה ראשונה, 2 העדפה שנייה וכן הלאה. בהמשך ParticipantMapper הופך
+    /// את הערכים הללו לדירוגים שבהם משתמש חישוב הציון.
+    /// </remarks>
+    private async Task ReplaceSocialPreferencesForParticipantAsync(
+        int assignmentId,
+        int fromParticipantAssignmentId,
+        IReadOnlyList<int> targetParticipantAssignmentIds,
+        CancellationToken cancellationToken)
+    {
+        // מוצאים את כל ההעדפות הישנות של המשתתף
+        var existing = await _db.SocialPreferences
+            .Where(entry => entry.AssignmentId == assignmentId
+                && entry.FromParticipantAssignmentId == fromParticipantAssignmentId)
+            .ToListAsync(cancellationToken);
+
+        _db.SocialPreferences.RemoveRange(existing);
+
+        // מוסיפים מחדש לפי הסדר שקיבלנו
+        for (var index = 0; index < targetParticipantAssignmentIds.Count; index++)
+        {
+            _db.SocialPreferences.Add(new SocialPreference
+            {
+                AssignmentId = assignmentId,
+                FromParticipantAssignmentId = fromParticipantAssignmentId,
+                ToParticipantAssignmentId = targetParticipantAssignmentIds[index],
+                // דירוג 1 = הראשון ברשימה
+                PreferenceWeight = index + 1,
+            });
+        }
+    }
+
     private async Task UpdateGroupCountAsync(
         int assignmentId,
         AssignmentSettingsDto settings,
         CancellationToken cancellationToken)
     {
+        // מחפשים שורת אילוץ קיימת
         var groupCount = await _db.GroupCountConstraints
             .FirstOrDefaultAsync(entry => entry.AssignmentId == assignmentId, cancellationToken);
 
@@ -835,7 +1062,6 @@ public sealed class AssignmentEditorService
             return;
         }
 
-        // עדכון in-place — EF יעקוב אחרי השינוי ב-SaveChanges.
         groupCount.MinGroups = settings.MinGroups;
         groupCount.MaxGroups = settings.MaxGroups;
     }
@@ -854,6 +1080,7 @@ public sealed class AssignmentEditorService
         AssignmentSettingsDto settings,
         CancellationToken cancellationToken)
     {
+        // טוענים את כל אילוצי הגודל הקיימים
         var existing = await _db.GroupSizeConstraints
             .Where(entry => entry.AssignmentId == assignmentId)
             .ToListAsync(cancellationToken);
@@ -861,6 +1088,7 @@ public sealed class AssignmentEditorService
         // מחיקה מלאה — בונה מחדש לפי MaxGroups הנוכחי.
         _db.GroupSizeConstraints.RemoveRange(existing);
 
+        // יוצרים שורה לכל קבוצה מ-1 עד המקסימום
         for (var groupId = 1; groupId <= settings.MaxGroups; groupId++)
         {
             _db.GroupSizeConstraints.Add(new GroupSizeConstraint
@@ -877,7 +1105,7 @@ public sealed class AssignmentEditorService
     /// מוסיף רשומות ParticipantClassification — יוצר מימד/רמה במאגר אם חסרים.
     /// </summary>
     /// <param name="participantAssignmentId">מזהה שיוך משתתף↔חלוקה.</param>
-    /// <param name="classifications">מילון מימד→רמה.</param>
+    /// <param name="classifications">מילון מימד רמה.</param>
     /// <param name="cancellationToken">ביטול אסינכרוני.</param>
     /// <returns>null בהצלחה; הודעת שגיאה בעברית אם הקלט לא תקין.</returns>
     /// <remarks>
@@ -890,11 +1118,14 @@ public sealed class AssignmentEditorService
     {
         // טעינת מאגר מימדים — dimensionByCode מאפשר GetOrCreate בלי שאילתות כפולות.
         var dimensionByCode = await ClassificationCatalogHelper.LoadDimensionLookupAsync(_db, cancellationToken);
+        // טוענים את כל הרמות הקיימות
         var levels = await _db.ClassificationLevels.ToListAsync(cancellationToken);
+        // מילון לחיפוש רמה לפי מימד וקוד
         var levelIdByDimensionAndCode = levels.ToDictionary(
             level => (level.ClassificationDimensionId, level.LevelCode),
             level => level.ClassificationLevelId);
 
+        // עוברים על כל זוג מימד-רמה מהבקשה
         foreach (var (dimensionCode, levelCode) in classifications)
         {
             if (string.IsNullOrWhiteSpace(dimensionCode) || string.IsNullOrWhiteSpace(levelCode))
@@ -902,12 +1133,14 @@ public sealed class AssignmentEditorService
                 return "סיווג לא תקין: מימד ורמה חייבים להיות מלאים.";
             }
 
+            // מוצאים או יוצרים את המימד
             var dimension = await ClassificationCatalogHelper.GetOrCreateDimensionAsync(
                 _db,
                 dimensionByCode,
                 dimensionCode,
                 cancellationToken);
 
+            // מוצאים או יוצרים את הרמה
             var levelId = await ClassificationCatalogHelper.GetOrCreateLevelIdAsync(
                 _db,
                 levelIdByDimensionAndCode,
@@ -915,6 +1148,7 @@ public sealed class AssignmentEditorService
                 levelCode,
                 cancellationToken);
 
+            // מוסיפים את הסיווג למשתתף
             _db.ParticipantClassifications.Add(new ParticipantClassification
             {
                 ParticipantAssignmentId = participantAssignmentId,
@@ -936,43 +1170,52 @@ public sealed class AssignmentEditorService
     /// </remarks>
     private static List<string> ValidateSettings(AssignmentSettingsDto? settings)
     {
+        // אין הגדרות — אין מה לבדוק
         if (settings is null)
         {
             return new List<string>();
         }
 
+        // רשימה לאיסוף כל השגיאות
         var errors = new List<string>();
 
+        // מינימום קבוצות חייב להיות חיובי
         if (settings.MinGroups <= 0)
         {
             errors.Add("מספר קבוצות מינימום חייב להיות חיובי.");
         }
 
+        // מקסימום קבוצות חייב להיות חיובי
         if (settings.MaxGroups <= 0)
         {
             errors.Add("מספר קבוצות מקסימום חייב להיות חיובי.");
         }
 
+        // המינימום לא יכול לעבור את המקסימום
         if (settings.MinGroups > settings.MaxGroups)
         {
             errors.Add("מספר קבוצות מינימום גדול מהמקסימום.");
         }
 
+        // גודל מינימלי חייב להיות חיובי
         if (settings.MinGroupSize <= 0)
         {
             errors.Add("גודל קבוצה מינימום חייב להיות חיובי.");
         }
 
+        // גודל מקסימלי חייב להיות חיובי
         if (settings.MaxGroupSize <= 0)
         {
             errors.Add("גודל קבוצה מקסימום חייב להיות חיובי.");
         }
 
+        // גודל מינימום לא יכול לעבור מקסימום
         if (settings.MinGroupSize > settings.MaxGroupSize)
         {
             errors.Add("גודל קבוצה מינימום גדול מהמקסימום.");
         }
 
+        // מחזירים את כל מה שמצאנו
         return errors;
     }
 
@@ -989,13 +1232,16 @@ public sealed class AssignmentEditorService
     {
         // קיבולת מינימום = MinGroups × MinGroupSize; מקסימום = MaxGroups × MaxGroupSize.
         var minCapacity = settings.MinGroups * settings.MinGroupSize;
+        // מחשבים קיבולת מקסימלית
         var maxCapacity = settings.MaxGroups * settings.MaxGroupSize;
 
         if (participantCount < minCapacity || participantCount > maxCapacity)
         {
+            // יותר מדי או מעט מדי משתתפים
             return $"מספר המשתתפים ({participantCount}) לא מתאים לקיבולת הקבוצות ({minCapacity}-{maxCapacity}).";
         }
 
+        // הכל בסדר
         return null;
     }
 
@@ -1010,6 +1256,7 @@ public sealed class AssignmentEditorService
     /// </remarks>
     private static bool TryParseRuleType(string ruleType, out bool isBalance)
     {
+        // ברירת מחדל — הפרדה
         isBalance = false;
 
         if (string.Equals(ruleType, "Balance", StringComparison.OrdinalIgnoreCase)
@@ -1046,6 +1293,7 @@ public sealed class AssignmentEditorService
     {
         // ValidateAsync — מעדכן ValidationStatus ו-LastValidationErrors ב-Assignment.
         await _validator.ValidateAsync(assignmentId, managerId, cancellationToken);
+        // טוענים את הפירוט המלא אחרי האימות
         return await _detailLoader.GetDetailAsync(assignmentId, managerId, cancellationToken);
     }
 
@@ -1062,6 +1310,7 @@ public sealed class AssignmentEditorService
     /// </remarks>
     private static bool TryNormalizeIdentity(string raw, out string normalized, out string error)
     {
+        // מתחילים עם ערכי ברירת מחדל
         normalized = string.Empty;
         error = "לא תקינה";
 
@@ -1071,21 +1320,25 @@ public sealed class AssignmentEditorService
             return false;
         }
 
+        // חותכים רווחים מההתחלה והסוף
         var trimmed = raw.Trim();
 
         // Excel לפעמים שומר ת.ז. כמספר עם ".0" בסוף — חותכים לפני הנקודה.
         var decimalSeparatorIndex = trimmed.IndexOf('.');
         if (decimalSeparatorIndex >= 0)
         {
+            // לוקחים רק את החלק לפני הנקודה
             trimmed = trimmed[..decimalSeparatorIndex];
         }
 
         // ת.ז. ישראלית = בדיוק 9 ספרות.
         if (trimmed.Length != 9 || !trimmed.All(char.IsDigit))
         {
+            // אורך או תווים לא תקינים
             return false;
         }
 
+        // שומרים את התוצאה המנורמלת
         normalized = trimmed;
         return true;
     }

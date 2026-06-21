@@ -20,7 +20,6 @@ namespace MyProject.BL.Algorithm.InitialPlacement.Placement;
 public sealed class LocalRepairEngine
 {
     // המנוע הזה מופעל מתוך InitialPlacementOrchestrator.Run
-    // בקובץ Orchestration/InitialPlacementOrchestrator.cs
     // רק כאשר בנייה חמדנית יצרה חלוקה שאינה חוקית.
 
     private readonly IAssignmentValidator _validator;
@@ -81,11 +80,9 @@ public sealed class LocalRepairEngine
 
         var constraints = input.Constraints;
         // טבלת חיפוש מהירה: לכל משתתף, מי אסור להיות איתו באותה קבוצה.
-        // המתודה BuildForbiddenLookup נמצאת בהמשך אותו קובץ.
         var forbiddenLookup = BuildForbiddenLookup(input);
 
-        // בניית ייצוג יחידתי: כל משתתף ממופה ליחידת שיבוץ שלמה (יחידת חובה או יחידת יחיד).
-        // BuildParticipantToUnitId בהמשך הקובץ יוצר יחידות גם למשתתפים בודדים.
+        // בניית ייצוג יחידתי: כל משתתף ממופה ליחידת שיבוץ שלמה (יחידת חובה או יחידת יחיד
         var participantToUnitId = BuildParticipantToUnitId(input, mandatoryUnits, out var unitIdToMembers);
         // BuildAllGroupIds + BuildGroupCapacities (אותו קובץ) מגדירות את גבולות המשחק לתיקון.
         var allGroupIds = BuildAllGroupIds(input, groups);
@@ -146,7 +143,11 @@ public sealed class LocalRepairEngine
             .ToList();
         return false;
     }
-
+    /// <summary>
+    /// תפקיד הפונקציה: בונה טבלת חיפוש של איסורים בין משתתפים.
+    /// </summary>
+    /// <param name="input"></param>
+    /// <returns></returns>
     private static Dictionary<ParticipantId, HashSet<ParticipantId>> BuildForbiddenLookup(InitialPlacementInput input)
     {
         // מקור הנתונים:
@@ -175,19 +176,23 @@ public sealed class LocalRepairEngine
         return lookup;
     }
 
+    /// <summary>
+    /// תפקיד הפונקציה: בונה מיפוי משתתף ליחידת שיבוץ שלמה, תוך שמירה על יחידות החובה.
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="mandatoryUnits"></param>
+    /// <param name="unitIdToMembers" ></param>
     private static Dictionary<ParticipantId, int> BuildParticipantToUnitId(
         InitialPlacementInput input,
         MandatoryUnitMap mandatoryUnits,
         out Dictionary<int, IReadOnlyList<ParticipantId>> unitIdToMembers)
     {
-        // mandatoryUnits מגיע מ-MandatoryGroupBuilder.Build
-        // בקובץ MandatoryGroups/MandatoryGroupBuilder.cs
-        // וכאן הוא הופך לבסיס של "יחידות תיקון".
+        // 1) משתמשים במיפוי יחידות החובה כדי למ משתתפים ליחידות.
         unitIdToMembers = mandatoryUnits.Units
             .ToDictionary(
                 kv => kv.Key,
                 kv => (IReadOnlyList<ParticipantId>)kv.Value.ToList());
-
+        // 2) כל משתתף שלא נמצא ביחידת חובה מקבל יחידת יחיד חדשה.
         var participantToUnitId = new Dictionary<ParticipantId, int>();
         foreach (var unit in unitIdToMembers)
         {
@@ -197,10 +202,11 @@ public sealed class LocalRepairEngine
                 participantToUnitId[participantId] = unit.Key;
             }
         }
-
+        // מזהים את המזהה הבא ליחידה חדשה (למשתתפים שלא שייכים ליחידת חובה).
         var nextUnitId = unitIdToMembers.Count == 0 ? 0 : unitIdToMembers.Keys.Max() + 1;
         foreach (var participant in input.Participants)
         {
+            // אם המשתתף כבר שייך ליחידת חובה, אין צורך להוסיף אותו שוב.
             if (participantToUnitId.ContainsKey(participant.Id))
             {
                 continue;
@@ -212,7 +218,7 @@ public sealed class LocalRepairEngine
             nextUnitId++;
         }
 
-        return participantToUnitId;
+        return participantToUnitId; // מחזיר את המיפוי הסופי של משתתף ליחידת שיבוץ, כאשר כל יחידה היא יחידת חובה או יחידת יחיד.
     }
 
     private static IReadOnlyList<GroupId> BuildAllGroupIds(InitialPlacementInput input, IReadOnlyList<Group> groups)
@@ -411,6 +417,11 @@ public sealed class LocalRepairEngine
         return false;
     }
 
+    /// <summary>
+    /// תפקיד הפונקציה: בודקת האם ניתן להעביר יחידת שיבוץ שלמה לקבוצה אחרת.
+    /// קלט עיקרי: מזהי יחידה וקבוצות, קיבולות וטבלת איסורים.
+    /// פלט עיקרי: true אם המהלך אפשרי מבחינת קיבולת ואיסורים.
+    /// </summary>
     private static bool CanMoveUnit(
         int unitId,
         GroupId sourceGroupId,
@@ -440,6 +451,11 @@ public sealed class LocalRepairEngine
         return sourceGroupId != targetGroupId;
     }
 
+    /// <summary>
+    /// תפקיד הפונקציה: בודקת האם ניתן להחליף שתי יחידות שיבוץ בין שתי קבוצות.
+    /// קלט עיקרי: שתי יחידות, שתי קבוצות, קיבולות ואיסורים.
+    /// פלט עיקרי: true אם שני הצדדים נשארים חוקיים אחרי ההחלפה.
+    /// </summary>
     private static bool CanSwapUnits(
         int unitInA,
         int unitInB,
@@ -492,6 +508,11 @@ public sealed class LocalRepairEngine
         return groupIdToUnitIds[groupId].Sum(unitId => unitIdToMembers[unitId].Count);
     }
 
+    /// <summary>
+    /// תפקיד הפונקציה: בודקת קונפליקט איסור בין יחידה נכנסת ליחידות קיימות בקבוצה.
+    /// קלט עיקרי: יחידה נכנסת, יחידות בקבוצה, חברי יחידות וטבלת איסורים.
+    /// פלט עיקרי: true אם נמצא זוג אסור.
+    /// </summary>
     private static bool HasForbiddenConflict(
         int incomingUnitId,
         IEnumerable<int> existingUnitIds,
@@ -563,6 +584,11 @@ public sealed class LocalRepairEngine
         }
     }
 
+    /// <summary>
+    /// תפקיד הפונקציה: בונה רשימת Group מתוך מצב יחידות — בלי לפצל יחידות חובה.
+    /// קלט עיקרי: מיפוי קבוצה→יחידות ומיפוי יחידה→משתתפים.
+    /// פלט עיקרי: קבוצות Core מלאות.
+    /// </summary>
     private static IReadOnlyList<Group> BuildGroupsFromUnitState(
         IReadOnlyDictionary<GroupId, List<int>> groupIdToUnitIds,
         IReadOnlyDictionary<int, IReadOnlyList<ParticipantId>> unitIdToMembers)

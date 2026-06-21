@@ -4,6 +4,13 @@ using MyProject.SolverService.Validation;
 
 namespace MyProject.SolverService.Jobs;
 
+/// <summary>
+/// מתזמר עבודות פותר — מקבל בקשה, מאמת, שומר במאגר ומריץ CP-SAT ברקע.
+/// </summary>
+/// <remarks>
+/// זרימה: Submit → ולידציה → שמירה → Task.Run(ProcessJob) → עדכון סטטוס.
+/// הלקוח (MyProject.BL) שואל סטטוס ב-polling דרך GET.
+/// </remarks>
 public sealed class SolverJobProcessor
 {
     private readonly ISolverJobStore _jobStore;
@@ -15,6 +22,9 @@ public sealed class SolverJobProcessor
         _solver = solver;
     }
 
+    /// <summary>
+    /// מגיש עבודה חדשה. אם הקלט תקין — מפעיל פתרון ברקע ומחזיר מזהה למעקב.
+    /// </summary>
     public Guid Submit(SolverJobRequest request, out List<string> validationErrors)
     {
         validationErrors = SolverJobRequestValidator.Validate(request);
@@ -32,12 +42,16 @@ public sealed class SolverJobProcessor
 
         if (validationErrors.Count == 0)
         {
+            // ריצה אסינכרונית — ה-API מחזיר 202 מיד, הלקוח שואל סטטוס בנפרד.
             _ = Task.Run(() => ProcessJob(jobId));
         }
 
         return jobId;
     }
 
+    /// <summary>
+    /// מריץ את CP-SAT ומעדכן את רשומת העבודה בתוצאה.
+    /// </summary>
     private void ProcessJob(Guid jobId)
     {
         if (!_jobStore.TryGet(jobId, out var job) || job?.Request is null)
@@ -70,6 +84,9 @@ public sealed class SolverJobProcessor
         }
     }
 
+    /// <summary>
+    /// מבטל עבודה שעדיין ממתינה או רצה. עבודה שהסתיימה לא ניתנת לביטול.
+    /// </summary>
     public bool TryCancel(Guid jobId)
     {
         if (!_jobStore.TryGet(jobId, out var job) || job is null)

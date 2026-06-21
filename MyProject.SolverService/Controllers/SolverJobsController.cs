@@ -4,6 +4,12 @@ using MyProject.SolverService.Jobs;
 
 namespace MyProject.SolverService.Controllers;
 
+/// <summary>
+/// נקודות קצה HTTP לשירות הפותר — הגשת עבודה, בדיקת סטטוס וביטול.
+/// </summary>
+/// <remarks>
+/// נקרא מ-MyProject.BL דרך ExternalSolverClient (polling על GET).
+/// </remarks>
 [ApiController]
 [Route("api/v1/solver/jobs")]
 public sealed class SolverJobsController : ControllerBase
@@ -17,6 +23,7 @@ public sealed class SolverJobsController : ControllerBase
         _jobStore = jobStore;
     }
 
+    /// <summary>מגיש עבודת שיבוץ — מחזיר 202 עם jobId או 400 אם הקלט לא תקין.</summary>
     [HttpPost]
     [ProducesResponseType(typeof(SolverJobCreatedResponse), StatusCodes.Status202Accepted)]
     [ProducesResponseType(typeof(SolverErrorResponse), StatusCodes.Status400BadRequest)]
@@ -41,6 +48,7 @@ public sealed class SolverJobsController : ControllerBase
         });
     }
 
+    /// <summary>מחזיר סטטוס עבודה — כולל שיבוץ יחידות אם הסתיים בהצלחה.</summary>
     [HttpGet("{jobId:guid}")]
     [ProducesResponseType(typeof(SolverJobStatusResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -64,6 +72,7 @@ public sealed class SolverJobsController : ControllerBase
         });
     }
 
+    /// <summary>מבטל עבודה ממתינה או רצה.</summary>
     [HttpDelete("{jobId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

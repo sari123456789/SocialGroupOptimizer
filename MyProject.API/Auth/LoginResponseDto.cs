@@ -6,5 +6,7 @@ public sealed class LoginResponseDto
 
     public int ManagerId { get; set; }
 
+    public string Email { get; set; } = string.Empty;
+
     public string ManagerName { get; set; } = string.Empty;
 }

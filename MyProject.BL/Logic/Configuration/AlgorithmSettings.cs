@@ -78,6 +78,11 @@ public sealed class AlgorithmSettings
     public const bool DefaultEnableLocalSearch = true;
 
     /// <summary>
+    /// ברירת מחדל — מספר מקסימלי של מעברי GroupRebalance אחרי Local Search.
+    /// </summary>
+    public const int DefaultMaxGroupRebalancePasses = 5;
+
+    /// <summary>
     /// מאתחל עם כל ערכי ברירת המחדל.
     /// </summary>
     public AlgorithmSettings()
@@ -135,7 +140,8 @@ public sealed class AlgorithmSettings
         double highWeakGroupRatioThreshold = DefaultHighWeakGroupRatioThreshold,
         int lightStagnationThreshold = DefaultLightStagnationThreshold,
         int heavyStagnationThreshold = DefaultHeavyStagnationThreshold,
-        bool enableLocalSearch = DefaultEnableLocalSearch)
+        bool enableLocalSearch = DefaultEnableLocalSearch,
+        int maxGroupRebalancePasses = DefaultMaxGroupRebalancePasses)
     {
         if (maxIterations <= 0)
         {
@@ -214,6 +220,13 @@ public sealed class AlgorithmSettings
                 "Light stagnation threshold must not exceed heavy stagnation threshold.");
         }
 
+        if (maxGroupRebalancePasses <= 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(maxGroupRebalancePasses),
+                "Max group rebalance passes must be greater than zero.");
+        }
+
         MaxIterations = maxIterations;
         CandidateCount = candidateCount;
         RepairAttempts = repairAttempts;
@@ -227,6 +240,7 @@ public sealed class AlgorithmSettings
         LightStagnationThreshold = lightStagnationThreshold;
         HeavyStagnationThreshold = heavyStagnationThreshold;
         EnableLocalSearch = enableLocalSearch;
+        MaxGroupRebalancePasses = maxGroupRebalancePasses;
     }
 
     /// <summary>
@@ -293,6 +307,11 @@ public sealed class AlgorithmSettings
     /// האם להריץ חיפוש מקומי לשיפור חלוקה אחרי Initial Placement.
     /// </summary>
     public bool EnableLocalSearch { get; }
+
+    /// <summary>
+    /// מספר מקסימלי של מעברי GroupRebalance (כל מעבר: ניסיון איחוד + Local Search נוסף).
+    /// </summary>
+    public int MaxGroupRebalancePasses { get; }
 
     /// <summary>
     /// מחשב סטייה מקסימלית בקנה מידה לפי מספר משתתפים ואחוז סובלנות.

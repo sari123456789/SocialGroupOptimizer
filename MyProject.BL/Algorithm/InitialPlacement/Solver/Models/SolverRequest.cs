@@ -20,12 +20,14 @@ public sealed class SolverRequest
         IReadOnlyList<PlacementUnitRequest> placementUnits,
         IReadOnlyList<SolverGroupRequest> groups,
         IReadOnlyList<SolverForbiddenUnitPairRequest> forbiddenUnitPairs,
-        IReadOnlyList<SolverClassificationConstraintRequest> classificationConstraints)
+        IReadOnlyList<SolverClassificationConstraintRequest> classificationConstraints,
+        int minGroups = 0)
     {
         PlacementUnits = placementUnits ?? throw new ArgumentNullException(nameof(placementUnits));
         Groups = groups ?? throw new ArgumentNullException(nameof(groups));
         ForbiddenUnitPairs = forbiddenUnitPairs ?? throw new ArgumentNullException(nameof(forbiddenUnitPairs));
         ClassificationConstraints = classificationConstraints ?? throw new ArgumentNullException(nameof(classificationConstraints));
+        MinGroups = minGroups;
         Participants = BuildParticipantsFromPlacementUnits(placementUnits);
     }
 
@@ -43,8 +45,9 @@ public sealed class SolverRequest
         IReadOnlyList<PlacementUnitRequest> placementUnits,
         IReadOnlyList<SolverGroupRequest> groups,
         IReadOnlyList<SolverForbiddenUnitPairRequest> forbiddenUnitPairs,
-        IReadOnlyList<SolverClassificationConstraintRequest> classificationConstraints)
-        : this(placementUnits, groups, forbiddenUnitPairs, classificationConstraints)
+        IReadOnlyList<SolverClassificationConstraintRequest> classificationConstraints,
+        int minGroups = 0)
+        : this(placementUnits, groups, forbiddenUnitPairs, classificationConstraints, minGroups)
     {
         Participants = participants ?? Array.Empty<SolverParticipantRequest>();
     }
@@ -60,6 +63,12 @@ public sealed class SolverRequest
     /// </summary>
     /// <remarks>נקרא מ- <see cref="SolverResultMapper"/>, <see cref="SolverJobWireMapper"/>.</remarks>
     public IReadOnlyList<SolverGroupRequest> Groups { get; }
+
+    /// <summary>
+    /// תפקיד: מספר הקבוצות המינימלי שחייבות להיות בשימוש; 0 = ללא חסם תחתון.
+    /// </summary>
+    /// <remarks>נקרא מ- <see cref="SolverJobWireMapper.ToSubmitWire"/>.</remarks>
+    public int MinGroups { get; }
 
     /// <summary>
     /// תפקיד: זוגות יחידות שאסור לשבץ באותה קבוצה.

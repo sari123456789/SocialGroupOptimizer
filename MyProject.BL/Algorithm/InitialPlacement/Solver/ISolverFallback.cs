@@ -7,7 +7,7 @@ namespace MyProject.BL.Algorithm.InitialPlacement.Solver;
 /// תפקיד: חוזה למסלול פותר חלופי — מנסה לפתור חלוקה ראשונית כש-Greedy/Repair נכשלו או כאסטרטגיה ראשונה.
 /// </summary>
 /// <remarks>
-/// מיושם ע"י <see cref="ExternalSolverFallback"/> ו-<see cref="SolverFallbackPlaceholder"/>.
+/// מיושם ע"י <see cref="ExternalSolverFallback"/>.
 /// </remarks>
 public interface ISolverFallback
 {

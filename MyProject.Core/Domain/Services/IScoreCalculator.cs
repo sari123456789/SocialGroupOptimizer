@@ -7,6 +7,7 @@ namespace MyProject.Core.Domain.Services;
 /// <summary>
 /// חוזה לחישוב ניקוד עבור הקצאה.
 /// </summary>
+/// <remarks>ציון גבוה יותר = חלוקה טובה יותר; מיושם ב-BL לפי העדפות וקנסות.</remarks>
 public interface IScoreCalculator
 {
     /// <summary>

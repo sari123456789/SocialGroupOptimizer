@@ -47,6 +47,7 @@ public sealed class MandatoryPairConstraint : IConstraint
         var groupOfA = assignment.Groups.FirstOrDefault(g => g.ParticipantIds.Contains(ParticipantA));
         var groupOfB = assignment.Groups.FirstOrDefault(g => g.ParticipantIds.Contains(ParticipantB));
 
+        // זוג חובה: שניהם חייבים להיות משובצים, ולאותה קבוצה בדיוק.
         return groupOfA is not null
             && groupOfB is not null
             && groupOfA.Id == groupOfB.Id;

@@ -48,6 +48,7 @@ public sealed class GroupCountConstraint : IConstraint
     /// <inheritdoc/>
     public bool IsSatisfied(Assignment assignment)
     {
+        // סופרים קבוצות בפועל בחלוקה (כולל קבוצות ריקות אם קיימות).
         var count = assignment.Groups.Count;
         return count >= MinGroups && count <= MaxGroups;
     }

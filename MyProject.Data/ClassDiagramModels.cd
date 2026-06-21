@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.Data.Models.Assignment">
+    <Position X="0.5" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAQAQAAAABiAIAAAABAAAQAAAABAAAAAAAAIAAAAAA=</HashCode>
+      <FileName>Models\Assignment.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.AssignmentClassificationConstraint">
+    <Position X="5" Y="0.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAAAAAAAAAABAAAAAAAAAIAAAAAAAAAA=</HashCode>
+      <FileName>Models\AssignmentClassificationConstraint.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.AssignmentConflict">
+    <Position X="6.25" Y="2.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgIAAAAAAAAAABAAAQAAAAAAAAAAQAAAA=</HashCode>
+      <FileName>Models\AssignmentConflict.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.AssignmentScoreBreakdown">
+    <Position X="8" Y="0.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAAAAAgAAAgAAQAAAAIAAAAAAAAAAAAAAAACAA=</HashCode>
+      <FileName>Models\AssignmentScoreBreakdown.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.BestSolutionArchive">
+    <Position X="11.5" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAQIAAAAAAAAAAAAAAIAEAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\BestSolutionArchive.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.ClassificationDimension">
+    <Position X="2.75" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAgAAAAAAA=</HashCode>
+      <FileName>Models\ClassificationDimension.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.ClassificationLevel">
+    <Position X="2.75" Y="2" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAEAAAAAAAAAAAABAAAAAAAAAAAAAAAAIAAA=</HashCode>
+      <FileName>Models\ClassificationLevel.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.ForbiddenPairConstraint">
+    <Position X="8.5" Y="4.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAQAAAAAgASAAAAAAAAAAAAAAAAEAEAA=</HashCode>
+      <FileName>Models\ForbiddenPairConstraint.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.GroupCountConstraint">
+    <Position X="6" Y="5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAABAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\GroupCountConstraint.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.GroupSizeConstraint">
+    <Position X="13.5" Y="2.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAAEAAAgAAAAAAAAAAAAAAAAAAAAAACAAAAAAAA=</HashCode>
+      <FileName>Models\GroupSizeConstraint.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.ManagementGroup">
+    <Position X="0.5" Y="5.25" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAABIAAAAAAAIAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\ManagementGroups.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.Manager">
+    <Position X="4.5" Y="2.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AACAAAAAAAAAAAAAAAAIQAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\Manager.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.MandatoryPairConstraint">
+    <Position X="11.25" Y="2.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAQAAAAAgAQAAAAAABAAAAAAAAAEAEAA=</HashCode>
+      <FileName>Models\MandatoryPairConstraint.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.Participant">
+    <Position X="8.75" Y="2.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAACAAAAAAAAAAAAAAAAAAAAAAAAAAAJAAAAAAAAA=</HashCode>
+      <FileName>Models\Participant.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.ParticipantAssignment">
+    <Position X="11.5" Y="5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAQAAAgAAAAAAAIAAAAEAAAAAAAAIAAAAAAAAA=</HashCode>
+      <FileName>Models\ParticipantAssignment.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.ParticipantClassification">
+    <Position X="0.5" Y="3.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAQAEAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\ParticipantClassification.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.Data.Models.SocialPreference">
+    <Position X="3.25" Y="4.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAggAQAAAAAAAQAAIIAAAEAAAAAAAAAAAAA=</HashCode>
+      <FileName>Models\SocialPreference.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

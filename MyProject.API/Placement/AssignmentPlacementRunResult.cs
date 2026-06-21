@@ -16,14 +16,19 @@ public sealed class AssignmentPlacementRunResult
     public Assignment? FinalAssignment { get; init; }
 
     /// <summary>תוצאת שיפור — null אם לא הורץ או fallback.</summary>
+    /// <remarks>מאפיין אופציונלי שמחזיק את תוצאת השיפור.</remarks>
     public AssignmentImprovementResult? ImprovementResult { get; init; }
 
     /// <summary>האם ניסו להריץ שיפור (גם אם נכשל עם fallback).</summary>
     public bool WasImprovementAttempted { get; init; }
 
     /// <summary>האם חזרנו לחלוקה הראשונית אחרי כשלון שיפור.</summary>
+    /// <remarks>מאפיין בוליאני שמציין אם נעשה שימוש בפתרון חלופי.</remarks>
     public bool UsedFallback { get; init; }
 
+
     /// <summary>אזהרה — למשל fallback או Assignment חסר.</summary>
+    /// <remarks>מאפיין אופציונלי שמכיל טקסט אזהרה.</remarks>
     public string? Warning { get; init; }
+
 }

@@ -24,9 +24,7 @@ public sealed class InitialPlacementInput
     /// <exception cref="ArgumentNullException">פרמטר null.</exception>
     /// <exception cref="ArgumentException">רשימת משתתפים ריקה/פסולה.</exception>
     /// <remarks>
-    /// נקרא מ- <see cref="AssignmentPlacementLoader.LoadInputAsync"/>,
-    /// <see cref="InitialPlacementDtoMapper.ToInput"/>,
-    /// ParticipantsExcelToInitialPlacementMapper, _solver_validation.
+    /// נקרא מ- <see cref="AssignmentPlacementLoader.LoadInputAsync"/>, _solver_validation.
     /// </remarks>
     public InitialPlacementInput(
         InitialPlacementExecutionContext executionContext,
@@ -34,7 +32,7 @@ public sealed class InitialPlacementInput
         IReadOnlyList<IConstraint> constraints)
     {
         ExecutionContext = executionContext ?? throw new ArgumentNullException(nameof(executionContext));
-        // ולידציה פרטית — מבטיחה רשימות לא ריקות/ללא null לפני שהקלט נכנס לאורקstrator.
+ 
         Participants = ValidateParticipants(participants);
         Constraints = ValidateConstraints(constraints);
     }

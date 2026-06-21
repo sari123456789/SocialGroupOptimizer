@@ -10,8 +10,12 @@ using MyProject.BL.Logic.Configuration;
 namespace MyProject.BL.Algorithm.LocalSearch.Engine;
 
 /// <summary>
-/// מנוע חיפוש מקומי — מתזמר build, generate, evaluate, select, execute.
+/// תפקיד המחלקה: מנוע החיפוש המקומי — לולאת שיפור החלוקה.
+/// המחלקה משתתפת בשלב שיפור — אחרי חלוקה ראשונית חוקית.
 /// </summary>
+/// <remarks>
+/// זרימה: בניית נתוני ריצה -> יצירת מועמדים -> הערכה -> בחירה -> ביצוע -> עדכון מצב.
+/// </remarks>
 public sealed class LocalSearchEngine : ILocalSearchEngine
 {
     private readonly AlgorithmSettings _settings;
@@ -37,6 +41,11 @@ public sealed class LocalSearchEngine : ILocalSearchEngine
         _moveExecutor = moveExecutor ?? throw new ArgumentNullException(nameof(moveExecutor));
     }
 
+    /// <summary>
+    /// תפקיד הפונקציה: מריצה לולאת חיפוש מקומי עד שיפור, מיצוי מועמדים או מקסימום איטרציות.
+    /// קלט עיקרי: מצב התחלתי, משתתפים, אילוצים ומשקלות.
+    /// פלט עיקרי: מצב משופר, ציונים לפני/אחרי וסיבת עצירה.
+    /// </summary>
     /// <inheritdoc />
     public LocalSearchResult Improve(LocalSearchInput input)
     {
@@ -53,6 +62,7 @@ public sealed class LocalSearchEngine : ILocalSearchEngine
         var currentState = input.InitialState;
         var initialScore = input.InitialScore ?? currentState.CurrentScore;
 
+        // VisitedStateTracker — HashSet ללא כפילויות — מונע חזרה על מצבים שכבר נבדקו.
         var visitedStateTracker = new VisitedStateTracker();
         visitedStateTracker.MarkSeen(currentState.CurrentHash);
 
@@ -71,6 +81,7 @@ public sealed class LocalSearchEngine : ILocalSearchEngine
 
         while (iterationIndex < _settings.MaxIterations)
         {
+            // שלב 1: בניית אינדקסים ופרופילים לפי מצב החלוקה הנוכחי.
             var snapshot = RuntimeDataBuilder.Build(currentState, input.Participants);
 
             var generationContext = new MoveGenerationContext(
@@ -81,6 +92,7 @@ public sealed class LocalSearchEngine : ILocalSearchEngine
                 currentState.ParticipantToGroup.Count,
                 currentState.GroupToParticipants.Count);
 
+            // שלב 2: יצירת מועמדי Swap — החלפה — ו-Transfer — העברה.
             var proposals = _generator.Generate(currentState, snapshot, generationContext);
 
             if (proposals.Count == 0)
@@ -90,6 +102,7 @@ public sealed class LocalSearchEngine : ILocalSearchEngine
                 break;
             }
 
+            // שלב 3: הערכת כל המועמדים — אימות, ציון ובדיקת Hash — חתימה מחושבת.
             var results = _evaluationBatch.EvaluateAll(currentState, proposals, evaluationContext);
             var decision = _searchStrategy.SelectBest(results);
 
@@ -101,6 +114,7 @@ public sealed class LocalSearchEngine : ILocalSearchEngine
             }
 
             var selectedResult = decision.SelectedResult!;
+            // שלב 4: ביצוע המהלך שנבחר על מצב החלוקה הראשי (לא על עותק).
             var executionResult = _moveExecutor.ExecuteSelectedMove(
                 currentState,
                 selectedResult,
@@ -138,6 +152,11 @@ public sealed class LocalSearchEngine : ILocalSearchEngine
             executedMoves);
     }
 
+    /// <summary>
+    /// תפקיד הפונקציה: ממפה סטטוס החלטה לסיבת עצירה של החיפוש המקומי.
+    /// קלט עיקרי: סטטוס מ-BestImprovementSearchStrategy.
+    /// פלט עיקרי: ערך LocalSearchStopReason.
+    /// </summary>
     private static LocalSearchStopReason MapStopReason(SearchDecisionStatus status) =>
         status switch
         {

@@ -4,11 +4,11 @@ using MyProject.Core.Domain.ValueObjects;
 namespace MyProject.BL.Algorithm.InitialPlacement;
 
 /// <summary>
-/// מבצע בדיקות היתכנות מהירות לפני ניסיון בניית הצבה ראשונית.
+/// תפקיד המחלקה: בדיקת היתכנות מוקדמת לפני בניית חלוקה.
+/// המחלקה משתתפת בשלב הראשון של השיבוץ הראשוני — מסננת קלטים בלתי-פתירים.
 /// </summary>
 /// <remarks>
-/// תפקיד הרכיב הוא מסנן מוקדם בלבד.
-/// הוא לא מחלק משתתפים, לא בונה קבוצות, ולא מחשב ציון.
+/// תפקיד הרכיב הוא מסנן מוקדם בלבד — לא מחלק משתתפים ולא מחשב ציון.
 /// </remarks>
 public sealed class FeasibilityPreChecker
 {
@@ -30,13 +30,9 @@ public sealed class FeasibilityPreChecker
         }
 
         // אוסף שגיאות מרכזי לכל שלבי ההיתכנות.
-        // כל מתודת בדיקה בשלב הזה מוסיפה לכאן,
-        // ובסוף מחליטים לפי הכמות אם לעבור הלאה או לעצור.
         var errors = new List<string>();
 
         // שלב א: בדיקות בסיסיות על מבנה הקלט.
-        // ValidateInputShape ממומשת בהמשך אותו קובץ.
-        // התפקיד שלה: לוודא שאין null / רשימות ריקות לפני כל חישוב.
         ValidateInputShape(input, errors);
         if (errors.Count > 0)
         {
@@ -46,22 +42,16 @@ public sealed class FeasibilityPreChecker
 
         // שלב ב: הפרדת האילוצים לפי סוג, כדי לבדוק כל נושא בנפרד.
         // OfType<T> מסנן את הרשימה לאיברים מטיפוס מסוים בלבד.
-        // FirstOrDefault מחזיר את האיבר הראשון או null אם לא נמצא.
-        var groupCountConstraint = input.Constraints.OfType<GroupCountConstraint>().FirstOrDefault();
+         var groupCountConstraint = input.Constraints.OfType<GroupCountConstraint>().FirstOrDefault();
         // ToList מממש את השאילתה לרשימה ממשית בזיכרון.
         var groupSizeConstraints = input.Constraints.OfType<GroupSizeConstraint>().ToList();
         var mandatoryPairs = input.Constraints.OfType<MandatoryPairConstraint>().ToList();
         var forbiddenPairs = input.Constraints.OfType<ForbiddenPairConstraint>().ToList();
-        // החלוקה לסוגים כאן היא "שכבת הכנה":
-        // כל מתודת בדיקה בשלב הבא מקבלת רק את האילוצים שרלוונטיים לה.
 
-        // שלב ג: בדיקות קיבולת וסתירות ישירות.
-        // שתי המתודות הבאות ממומשות בהמשך הקובץ:
-        // CheckCapacity - בודקת התאמה מספרית של משתתפים מול קיבולות.
-        // CheckDirectPairContradictions - בודקת זוג שמסומן גם "חובה" וגם "אסור".
-        CheckCapacity(input.Participants.Count, groupCountConstraint, groupSizeConstraints, errors);
-        CheckDirectPairContradictions(mandatoryPairs, forbiddenPairs, errors);
-        CheckPairParticipantsExist(mandatoryPairs, forbiddenPairs, input.Participants, errors);
+
+        CheckCapacity(input.Participants.Count, groupCountConstraint, groupSizeConstraints, errors);// בודק אם מספר המשתתפים מתאים לקיבולת המינימום והמקסימום הכוללת.
+        CheckDirectPairContradictions(mandatoryPairs, forbiddenPairs, errors);// בודק אם אותו זוג מופיע גם כחובה וגם כאסור.
+        CheckPairParticipantsExist(mandatoryPairs, forbiddenPairs, input.Participants, errors);// בודק שהמשתתפים שמופיעים באילוצי זוגות קיימים בקלט המשתתפים.
 
         // אם אילוץ מפנה למשתתף שלא קיים, עוצרים לפני בניית יחידות חובה.
         if (errors.Count > 0)
@@ -70,19 +60,12 @@ public sealed class FeasibilityPreChecker
         }
 
         // שלב ד: בניית יחידות חובה ואימות סתירות ביניהן.
-        // הקריאה ל-MandatoryGroupBuilder.Build:
-        // ממומשת בקובץ MandatoryGroups/MandatoryGroupBuilder.cs
-        // ומחזירה מפת יחידות חובה מסוג MandatoryUnitMap.
         var mandatoryUnits = MandatoryGroupBuilder.Build(input, mandatoryPairs);
         // שתי המתודות הבאות מקומיות לקובץ:
-        // 1) CheckForbiddenPairsInsideMandatoryUnits - מזהה זוג אסור בתוך אותה יחידה.
-        // 2) CheckMandatoryUnitSize - בודקת שיחידה לא גדולה מדי לקבוצה כלשהי.
-        CheckForbiddenPairsInsideMandatoryUnits(mandatoryUnits, forbiddenPairs, errors);
-        CheckMandatoryUnitSize(mandatoryUnits, groupCountConstraint, groupSizeConstraints, errors);
+        CheckForbiddenPairsInsideMandatoryUnits(mandatoryUnits, forbiddenPairs, errors);//זוג אסור באותה יחידה
+        CheckMandatoryUnitSize(mandatoryUnits, groupCountConstraint, groupSizeConstraints, errors);//יחידת חובה גדולה מגודל מקסימום
 
         // שלב ה: בדיקה פשוטה על גרף קונפליקטים בין יחידות חובה.
-        // ConflictGraphBuilder.Build ממומש בקובץ ConflictGraph/ConflictGraphBuilder.cs.
-        // הוא בונה גרף שבו צומת = יחידה, וקשת = איסור בין יחידות.
         var conflictGraph = ConflictGraphBuilder.Build(mandatoryUnits, forbiddenPairs);
         // CheckObviousWholeGraphClique (מקומית לקובץ) בודקת מקרה קיצון:
         // אם כל היחידות סותרות את כולן, אולי כבר עכשיו אין פתרון.
@@ -283,7 +266,7 @@ public sealed class FeasibilityPreChecker
                 // משמעות לוגית: אותה יחידת חובה דורשת יחד,
                 // אבל אילוץ אסור דורש הפרדה -> סתירה מיידית.
                 errors.Add(
-                    $"Forbidden participants {pair.ParticipantA} and {pair.ParticipantB} are inside the same mandatory unit.");
+                    $"זוג איסור ({pair.ParticipantA}, {pair.ParticipantB}) נמצא בתוך אותה יחידת חובה — סתירה מובנית.");
             }
         }
     }
@@ -311,7 +294,7 @@ public sealed class FeasibilityPreChecker
             if (unit.Value.Count > maximumGroupSize)
             {
                 errors.Add(
-                    $"Mandatory unit with {unit.Value.Count} participants is larger than maximum group capacity {maximumGroupSize}.");
+                    $"יחידת חובה של {unit.Value.Count} משתתפים גדולה מגודל הקבוצה המקסימלי ({maximumGroupSize}).");
             }
         }
     }
@@ -412,7 +395,9 @@ public sealed class FeasibilityPreChecker
             }
         }
     }
-
+    /// <summary>
+    /// פונקציה עוזרת שמוודאת אם יש מידע מספיק וקבוע על גודל הקבוצות כדי לבדוק את האיזון היחסי.
+    /// </summary>
     private static bool HasUniformFixedGroupSize(
         GroupCountConstraint? groupCountConstraint,
         IReadOnlyList<GroupSizeConstraint> groupSizeConstraints,
@@ -432,6 +417,9 @@ public sealed class FeasibilityPreChecker
                 && constraint.MaxCapacity.Value == expectedGroupSize);
     }
 
+    /// <summary>
+    /// פונקציה עוזרת לספור את מספר המשתתפים בכל רמה של מימד מסוים בכל הקבוצה.
+    /// </summary>
     private static Dictionary<ClassificationLevelCode, int> CountGlobalLevels(
         InitialPlacementInput input,
         ClassificationProportionalBalanceConstraint balance)
@@ -451,6 +439,13 @@ public sealed class FeasibilityPreChecker
         return counts;
     }
 
+    /// <summary>
+    /// פונקציה עוזרת לספור את מספר המשתתפים בכל רמה של מימד מסוים בתוך יחידת חובה.
+    /// </summary>
+    /// <param name="unitMembers"></param>
+    /// <param name="participantsById"></param>
+    /// <param name="balance"></param>
+    /// <returns></returns>
     private static Dictionary<ClassificationLevelCode, int> CountUnitLevelCounts(
         IReadOnlyList<ParticipantId> unitMembers,
         IReadOnlyDictionary<ParticipantId, MyProject.Core.Domain.Entities.Participant> participantsById,
@@ -475,7 +470,13 @@ public sealed class FeasibilityPreChecker
 
         return counts;
     }
-
+    /// <summary>
+    /// פונקציה עוזרת שמנסה לשלוף את הרמה של משתתף מסוים במימד מסוים, אם קיימת.
+    /// </summary>
+    /// <param name="participant"></param>
+    /// <param name="balance"></param>
+    /// <param name="level"></param>
+    /// <returns></returns>
     private static bool TryGetParticipantLevel(
         MyProject.Core.Domain.Entities.Participant participant,
         ClassificationProportionalBalanceConstraint balance,

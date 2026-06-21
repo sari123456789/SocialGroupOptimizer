@@ -7,6 +7,7 @@ namespace MyProject.Core.Domain.Services;
 /// <summary>
 /// חוזה לאימות פתרונות הקצאה.
 /// </summary>
+/// <remarks>מיושם ב-BL; עובר על כל האילוצים ואוסף הודעות שגיאה.</remarks>
 public interface IAssignmentValidator
 {
     /// <summary>

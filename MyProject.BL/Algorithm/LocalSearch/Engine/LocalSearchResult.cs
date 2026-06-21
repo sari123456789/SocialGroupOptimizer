@@ -13,15 +13,15 @@ public sealed class LocalSearchResult
     /// יוצר תוצאת חיפוש מקומי.
     /// </summary>
     public LocalSearchResult(
-        AssignmentState finalState,
-        Score initialScore,
-        Score finalScore,
-        bool hadImprovement,
-        int iterationsExecuted,
-        int movesExecuted,
-        LocalSearchStopReason stopReason,
-        string? detailReason,
-        IReadOnlyList<MoveExecutionResult> executedMoves)
+        AssignmentState finalState, //מצב החלוקה אחרי החיפוש
+        Score initialScore, //ציון בתחילת החיפוש
+        Score finalScore, //ציון בסיום החיפוש
+        bool hadImprovement, //האם הציון הסופי גבוה מההתחלתי
+        int iterationsExecuted, //מספר איטרציות לולאה שבוצעו
+        int movesExecuted, //מספר מהלכים שבוצעו בפועל
+        LocalSearchStopReason stopReason, //סיבת עצירה
+        string? detailReason, //פרוט נוסף
+        IReadOnlyList<MoveExecutionResult> executedMoves) //היסטוריית ביצועי מהלכים
     {
         FinalState = finalState ?? throw new ArgumentNullException(nameof(finalState));
         InitialScore = initialScore;

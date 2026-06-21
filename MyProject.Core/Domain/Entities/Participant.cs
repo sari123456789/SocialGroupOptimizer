@@ -37,6 +37,7 @@ public sealed class Participant
             throw new ArgumentException("Participant must have at least one classification dimension.", nameof(classifications));
         }
 
+        // מימד סיווג אחד לכל ציר — למשל "מגדר" לא יכול להופיע פעמיים.
         var classificationsCopy = new Dictionary<ClassificationDimensionCode, ClassificationLevelCode>(classifications.Count);
         foreach (var (dimension, level) in classifications)
         {
@@ -65,6 +66,7 @@ public sealed class Participant
             throw new ArgumentException("Participant preferences cannot contain duplicate preferred participant ids.", nameof(preferences));
         }
 
+        // דירוג 1 = העדפה חזקה ביותר; כל דירוג מופיע פעם אחת בלבד.
         if (preferencesList.Select(p => p.Rank).Distinct().Count() != preferencesList.Count)
         {
             throw new ArgumentException("Participant preferences cannot contain duplicate ranks.", nameof(preferences));

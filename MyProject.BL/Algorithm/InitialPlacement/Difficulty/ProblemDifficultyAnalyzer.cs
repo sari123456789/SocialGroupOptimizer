@@ -11,16 +11,13 @@ public static class ProblemDifficultyAnalyzer
     /// <summary>
     /// סף ל-Slack: מתחת לערך זה הפרופיל נחשב קשיח.
     /// </summary>
-    private const double RigiditySlackThreshold = 0.05;
+    private const double RigiditySlackThreshold = 0.05;//מרווח קיבולת קטן מ5%
 
-    /// <summary>
-    /// סף ל"אי גדול": יותר ממחצית הצמתים בגרף.
-    /// </summary>
-    private const double LargeIslandFraction = 0.5;
-    private const double MaxDensityForNormalization = 2.0;
-    private const double DensityWeight = 0.4;
-    private const double RigidityWeight = 0.3;
-    private const double LargestIslandWeight = 0.3;
+    private const double LargeIslandFraction = 0.5;//רכיב קשיר בגרף הקונפליקטים גדול מחצי מגודל הגרף
+    private const double MaxDensityForNormalization = 2.0;//משמעות הערך: צפיפות של 2 אילוצים למשתתף נחשבת גבוהה מאוד, ומעליה לא מגדילה את הציון.
+    private const double DensityWeight = 0.4;//צפיפות אילוצים. 0.4 = 40% מהציון הסופי.
+    private const double RigidityWeight = 0.3;//קשיחות קיבולת. 0.3 = 30% מהציון הסופי.
+    private const double LargestIslandWeight = 0.3;//גודל רכיב קונפליט גדול 0.3 = 30% מהציון הסופי.
 
     /// <summary>
     /// תפקיד: מנתח קושי ומחזיר פרופיל מלא.
@@ -35,8 +32,6 @@ public static class ProblemDifficultyAnalyzer
         MandatoryUnitMap mandatoryUnits,
         ConflictGraph conflictGraph)
     {
-        // Analyze נקראת מתוך InitialPlacementOrchestrator.Run
-        // בקובץ Orchestration/InitialPlacementOrchestrator.cs.
         // המטרה: לספק תמונת קושי מרוכזת לשימוש בהחלטות אלגוריתמיות.
         if (input is null)
         {
@@ -54,21 +49,21 @@ public static class ProblemDifficultyAnalyzer
         }
 
         var n = input.Participants.Count;
-        var mandatoryCount = input.Constraints.OfType<MandatoryPairConstraint>().Count();
-        var forbiddenCount = input.Constraints.OfType<ForbiddenPairConstraint>().Count();
+        var mandatoryCount = input.Constraints.OfType<MandatoryPairConstraint>().Count(); //כמה זוגות חובה
+        var forbiddenCount = input.Constraints.OfType<ForbiddenPairConstraint>().Count();//כמה זוגות אסורים
 
-        // תחביר תנאי מקוצר: מונעים חילוק באפס כשאין משתתפים.
+        // אחוז אילוצי חובה ואסור - צפיפות אילוצים.
         var constraintDensity = n > 0
-            ? (double)(mandatoryCount + forbiddenCount) / n
+            ? (double)(mandatoryCount + forbiddenCount) / n //5+8/100=0.13
             : 0.0;
 
-        var capacitySlack = ComputeCapacitySlack(input, n);
-        var isRigid = capacitySlack < RigiditySlackThreshold;
+        var capacitySlack = ComputeCapacitySlack(input, n);//חישוב מרווח קיבולת
+        var isRigid = capacitySlack < RigiditySlackThreshold;//אם מרווח הקיבולת קטן מ-5% => קשיח
 
-        var largestIslandSize = ComputeLargestIsland(conflictGraph);
-        var totalNodes = conflictGraph.Adjacency.Count;
+        var largestIslandSize = ComputeLargestIsland(conflictGraph);//גודל הרכיב הקשיר הגדול ביותר בגרף הקונפליקטים
+        var totalNodes = conflictGraph.Adjacency.Count;//מספר הצמתים בגרף הקונפליקטים
         // "אי גדול" מוגדר כרכיב שגדול מחצי מהגרף.
-        var hasLargeIsland = totalNodes > 0 && largestIslandSize > totalNodes * LargeIslandFraction;
+        var hasLargeIsland = totalNodes > 0 && largestIslandSize > totalNodes * LargeIslandFraction;//TRUE/FALRE
         var difficultyScore = ComputeDifficultyScore(constraintDensity, capacitySlack, largestIslandSize, totalNodes);
 
         return new ProblemDifficultyProfile(
@@ -78,36 +73,41 @@ public static class ProblemDifficultyAnalyzer
             largestIslandSize,
             hasLargeIsland,
             difficultyScore);
-        // ProblemDifficultyProfile מוגדר בקובץ Difficulty/ProblemDifficultyProfile.cs
-        // והוא אובייקט נתונים בלבד ללא לוגיקה.
     }
 
+    /// <summary>
+    /// תפקיד הפונקציה: מחשבת מרווח קיבולת — Capacity Slack — יחס מקום פנוי לקיבולת מקסימלית.
+    /// קלט עיקרי: קלט שיבוץ, מספר משתתפים.
+    /// פלט עיקרי: ערך 0..1 — נמוך = בעיה קשיחה יותר.
+    /// </summary>
     private static double ComputeCapacitySlack(InitialPlacementInput input, int participantCount)
     {
         var groupSizeConstraints = input.Constraints.OfType<GroupSizeConstraint>().ToList();
         if (groupSizeConstraints.Count == 0)
         {
-            return 1.0;
+            return 1.0;//אין אילוצי גודל קבוצה — מרווח מלא.
         }
 
-        var totalMaxCapacity = groupSizeConstraints.Sum(c => c.MaxCapacity.Value);
+        var totalMaxCapacity = groupSizeConstraints.Sum(c => c.MaxCapacity.Value);//סכימת כל הקיבולות המקסימליות של כל קבוצות הגודל.
         if (totalMaxCapacity == 0)
         {
-            return 0.0;
+            return 0.0;//אין מקום בכלל — מרווח אפס.
         }
 
-        var slack = (double)(totalMaxCapacity - participantCount) / totalMaxCapacity;
+        var slack = (double)(totalMaxCapacity - participantCount) / totalMaxCapacity;//קיבולת מקסימום - כמות משתתפים / לקיבולת מקסימום = אחוז מקום פנוי.
         // אם נוצר ערך שלילי, מהדקים ל-0 כדי לשמור על טווח סביר.
         return Math.Max(0.0, slack);
     }
 
     /// <summary>
-    /// מחשב את גודל הרכיב הקשיר הגדול ביותר בגרף הקונפליקטים (BFS).
+    /// תפקיד הפונקציה: מחשבת גודל הרכיב הקשיר הגדול ביותר בגרף הקונפליקטים.
+    /// קלט עיקרי: ConflictGraph — גרף קונפליקטים.
+    /// פלט עיקרי: מספר יחידות ברכיב הגדול ביותר.
     /// </summary>
     private static int ComputeLargestIsland(ConflictGraph conflictGraph)
     {
-        var adjacency = conflictGraph.Adjacency;
-        if (adjacency.Count == 0)
+        var adjacency = conflictGraph.Adjacency;//מפה של כל צומת לשכנים שלו בגרף הקונפליקטים.
+        if (adjacency.Count == 0)//אין צמתים בגרף — אין רכיבים קשירים.
         {
             return 0;
         }
@@ -117,12 +117,12 @@ public static class ProblemDifficultyAnalyzer
 
         foreach (var startNode in adjacency.Keys)
         {
-            if (visited.Contains(startNode))
+            if (visited.Contains(startNode))//אם הצומת כבר בוקר, דילוג על רכיב זה
             {
                 continue;
             }
 
-            var componentSize = BfsComponentSize(adjacency, startNode, visited);
+            var componentSize = BfsComponentSize(adjacency, startNode, visited);//ביצוע BFS כדי לספור את גודל הרכיב הקשיר שמתחיל בצומת זה.
             if (componentSize > largestComponent)
             {
                 largestComponent = componentSize;
@@ -131,7 +131,13 @@ public static class ProblemDifficultyAnalyzer
 
         return largestComponent;
     }
-
+    /// <summary>
+    /// תפקיד הפונקציה: מבצעת חיפוש רוחב (BFS) כדי לספור גודל רכיב קשיר בגרף.
+    /// </summary>
+    /// <param name="adjacency"></param>
+    /// <param name="start"></param>
+    /// <param name="visited"></param>
+    /// <returns></returns>
     private static int BfsComponentSize(
         IReadOnlyDictionary<int, HashSet<int>> adjacency,
         int start,
@@ -165,11 +171,16 @@ public static class ProblemDifficultyAnalyzer
         return count;
     }
 
+    /// <summary>
+    /// תפקיד הפונקציה: משקללת מדדי קושי לציון יחיד DifficultyScore (0–100).
+    /// קלט עיקרי: צפיפות אילוצים, slack, גודל רכיב מרכזי.
+    /// פלט עיקרי: ציון קושי מעוגל.
+    /// </summary>
     private static double ComputeDifficultyScore(
-        double constraintDensity,
-        double capacitySlack,
-        int largestIslandSize,
-        int totalNodes)
+        double constraintDensity,//צפיפות אילוצי חובה ואסור למשתתף
+        double capacitySlack,//מרווח קיבולת
+        int largestIslandSize,//גודל הרכיב הקשיר הגדול ביותר בגרף הקונפליקטים
+        int totalNodes)//מספר הצמתים בגרף הקונפליקטים
     {
         // נרמול כל מדד ל-0..100 ואז משקלול לפי המקדמים הקבועים.
         var densityScore = NormalizeToHundred(constraintDensity, MaxDensityForNormalization);
@@ -207,7 +218,7 @@ public static class ProblemDifficultyAnalyzer
             return min;
         }
 
-        // ternary — הגבלה עליונה בלבד אם value > max.
+        // 
         return value > max ? max : value;
     }
 }

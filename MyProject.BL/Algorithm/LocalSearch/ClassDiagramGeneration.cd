@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Generation.Strategies.ControlledRandomStrategy" BaseTypeListCollapsed="true">
+    <Position X="5.25" Y="3.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AABAAAAAAgCAAAAAAAAAEAAAAAAAAAAAAAAACEAAAAE=</HashCode>
+      <FileName>Algorithm\LocalSearch\Generation\Strategies\ControlledRandomStrategy.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Generation.Strategies.IsolatedParticipantStrategy" BaseTypeListCollapsed="true">
+    <Position X="5" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>QAAAAAAAAgAAAAAAAAABEAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Generation\Strategies\IsolatedParticipantStrategy.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Generation.Strategies.LowContributionStrategy" BaseTypeListCollapsed="true">
+    <Position X="10" Y="4" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAgAAAAAAAAAAEAgAAAAAAAAAEAAAAEAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Generation\Strategies\LowContributionStrategy.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Generation.Strategies.LowScoreGroupStrategy" BaseTypeListCollapsed="true">
+    <Position X="0.5" Y="2.25" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAEAgAQAAAIAAAAEAAAAAAAAAABAAAAAMAAAAI=</HashCode>
+      <FileName>Algorithm\LocalSearch\Generation\Strategies\LowScoreGroupStrategy.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Generation.Strategies.NearMissStrategy" BaseTypeListCollapsed="true">
+    <Position X="7.5" Y="0.75" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AQAAAAAAAgAACAAAAAAAEAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Generation\Strategies\NearMissStrategy.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Generation.Strategies.SwapPartnerSelector">
+    <Position X="0.5" Y="5.75" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Generation\Strategies\SwapPartnerSelector.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Generation.CandidateDeduplicator">
+    <Position X="0.5" Y="0.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAIIAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Generation\CandidateDeduplicator.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Generation.MoveGenerationContext">
+    <Position X="10" Y="0.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAgAIAAIAAAAAABAAAQAAAAAAAAAABAAAAAAAQAAAE=</HashCode>
+      <FileName>Algorithm\LocalSearch\Generation\MoveGenerationContext.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Generation.MoveGenerationPolicy">
+    <Position X="3" Y="3" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAEAAAgAAAAAAAAAAAAAAAgAAABAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Generation\MoveGenerationPolicy.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Generation.SwapMoveGenerator">
+    <Position X="3" Y="0.5" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAQACAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Generation\SwapMoveGenerator.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="MyProject.BL.Algorithm.LocalSearch.Generation.IMoveCandidateStrategy">
+    <Position X="7.75" Y="3.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAgAAAAAAAAAAEAAAAAAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Generation\IMoveCandidateStrategy.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

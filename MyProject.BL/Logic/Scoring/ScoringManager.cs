@@ -7,35 +7,27 @@ using MyProject.Core.Domain.ValueObjects;
 namespace MyProject.BL.Logic.Scoring;
 
 /// <summary>
-/// מנוע הניקוד: מתאם רכיבי ניקוד ומחזיר ציון הקצאה סופי.
+/// תפקיד המחלקה: ניהול חישוב הציון המרכזי של החלוקה.
+/// המחלקה משתתפת בשלב הערכת איכות — אחרי בניית חלוקה חוקית.
 /// </summary>
 /// <remarks>
-/// <para>נוסחה: ציון סופי = ציון חברתי − קנס בידוד.</para>
-/// <para>נקרא מ-: עדיין לא בשימוש מחוץ ל-BL.</para>
+/// הציון הראשי הוא אחוז מימוש העדפות חברתיות בטווח 0–100.
+/// קנס בידוד אינו מופחת מהציון הראשי.
 /// </remarks>
 public sealed class ScoringManager : IAssignmentScorer
 {
     private readonly SocialConnectionScorer _socialConnectionScorer;
-    private readonly IsolationPenaltyEvaluator _isolationPenaltyEvaluator;
 
-    /// <summary>
-    /// מאתחל מופע חדש עם רכיבי ניקוד סטנדרטיים.
-    /// </summary>
     public ScoringManager()
     {
-        // רכיבים stateless — נוצרים פעם אחת ומשמשים בכל קריאת CalculateScore.
         _socialConnectionScorer = new SocialConnectionScorer();
-        _isolationPenaltyEvaluator = new IsolationPenaltyEvaluator();
     }
 
     /// <summary>
-    /// מחשב ציון כולל להקצאה על בסיס כלל רכיבי הניקוד.
+    /// תפקיד הפונקציה: מחשבת את הציון הראשי של החלוקה.
+    /// קלט עיקרי: חלוקה, משתתפים עם העדפות, משקלות ניקוד.
+    /// פלט עיקרי: אחוז מימוש העדפות חברתיות (0–100).
     /// </summary>
-    /// <param name="assignment">החלוקה לניקוד.</param>
-    /// <param name="participants">כל המשתתפים כולל העדפותיהם.</param>
-    /// <param name="weights">משקלות מ-<see cref="ScoringWeights"/>.</param>
-    /// <returns>ציון סופי כ-<see cref="Score"/> (חברתי מינוס קנס בידוד).</returns>
-    /// <exception cref="ArgumentNullException">כאשר אחד מהפרמטרים הוא null.</exception>
     public Score CalculateScore(
         Assignment assignment,
         IReadOnlyList<Participant> participants,
@@ -56,21 +48,9 @@ public sealed class ScoringManager : IAssignmentScorer
             throw new ArgumentNullException(nameof(weights));
         }
 
-        // רכיב חיובי — סיפוק העדפות חברתיות, מוכפל במשקל מההגדרות.
-        var socialScore = _socialConnectionScorer.Calculate(
+        return _socialConnectionScorer.Calculate(
             assignment,
             participants,
             weights.SocialPreferenceWeight);
-
-        // רכיב שלילי — קנס על משתתפים מבודדים; penaltyPerIsolatedParticipant: 1.0 — בסיס לפני משקל.
-        var isolationPenalty = _isolationPenaltyEvaluator.Evaluate(
-            assignment,
-            participants,
-            penaltyPerIsolatedParticipant: 1.0,
-            weight: weights.IsolationPenaltyWeight);
-
-        // .Value — גישה לערך המספרי בתוך Value Object (Score / Penalty).
-        var total = socialScore.Value - isolationPenalty.Value;
-        return new Score(total);
     }
 }

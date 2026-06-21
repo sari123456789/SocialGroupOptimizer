@@ -31,6 +31,7 @@ public sealed class Group
             throw new ArgumentException("Group must contain at least one participant.", nameof(participantIds));
         }
 
+        // אותו משתתף לא יכול להופיע פעמיים באותה קבוצה.
         if (ids.Distinct().Count() != ids.Count)
         {
             throw new ArgumentException("Group cannot contain duplicate participants.", nameof(participantIds));

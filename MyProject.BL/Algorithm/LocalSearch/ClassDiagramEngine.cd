@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Engine.LocalSearchEngine" BaseTypeListCollapsed="true">
+    <Position X="1.75" Y="0.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>gAAAAAAAAABAAACAgAAAAAAAAEAAAAAAAAAAAEAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Engine\LocalSearchEngine.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" Collapsed="true" />
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Engine.LocalSearchInput">
+    <Position X="6.25" Y="1.25" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAQABAAAAAAAAAAAAAAAABAAACAAAAAABAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Engine\LocalSearchInput.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Engine.LocalSearchResult">
+    <Position X="4" Y="2.25" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAIAAAAAABAABAAAAgAAAAwAAAQAAAAAAAAAAEBA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Engine\LocalSearchResult.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Interface Name="MyProject.BL.Algorithm.LocalSearch.Engine.ILocalSearchEngine">
+    <Position X="4" Y="0.75" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Engine\ILocalSearchEngine.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Enum Name="MyProject.BL.Algorithm.LocalSearch.Engine.LocalSearchStopReason">
+    <Position X="1.75" Y="3.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAARAAAAAAAEAAAAAACAABAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Engine\LocalSearchStopReason.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

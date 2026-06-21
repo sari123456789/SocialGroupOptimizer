@@ -5,6 +5,15 @@ namespace MyProject.API.Auth;
 /// <summary>
 /// בקר התחברות — נקודת כניסה ציבורית (ללא [Authorize]).
 /// </summary>
+/// <remarks>
+/// מחלקה זו היא שער הכניסה הציבורי למערכת. בניגוד לרוב בקרי ה-API,
+/// היא אינה מוגנת ב-[Authorize], משום שמשתמש שעדיין לא התחבר חייב להיות
+/// מסוגל לשלוח אליה שם מנהל וסיסמה. לאחר התחברות או רישום מוצלח, הבקר
+/// מחזיר JWT ללקוח. הלקוח שומר את הטוקן ושולח אותו בבקשות הבאות בכותרת
+/// Authorization. הבקר אינו מבצע בעצמו Hash לסיסמה ואינו ניגש ישירות
+/// לכללי יצירת הטוקן; הוא מתאם בין AuthService, שמטפל באימות מול המסד,
+/// לבין JwtTokenService, שמייצר את הטוקן החתום.
+/// </remarks>
 [ApiController]
 [Route("api/auth")]
 public sealed class AuthController : ControllerBase
@@ -39,25 +48,73 @@ public sealed class AuthController : ControllerBase
 
         // שלב 1: אימות מול המסד (BCrypt).
         var authResult = await _authService.AuthenticateAsync(
-            request.ManagerName,
+            request.Email,
             request.Password,
             cancellationToken);
 
         if (authResult is null)
         {
-            // 401 + הודעה בעברית — לא מפרטים אם השם או הסיסמה שגויים.
-            return Unauthorized(new { message = "שם מנהל או סיסמה שגויים." });
+            return Unauthorized(new { message = "כתובת מייל או סיסמה שגויים." });
         }
 
-        // שלב 2: הנפקת JWT.
-        var token = _jwtTokenService.CreateToken(authResult.ManagerId, authResult.ManagerName);
+        var token = _jwtTokenService.CreateToken(
+            authResult.ManagerId,
+            authResult.Email,
+            authResult.ManagerName);
 
-        // Ok(...) — 200 + גוף JSON (LoginResponseDto).
         return Ok(new LoginResponseDto
         {
             Token = token,
             ManagerId = authResult.ManagerId,
+            Email = authResult.Email,
             ManagerName = authResult.ManagerName,
+        });
+    }
+
+    /// <summary>
+    /// POST /api/auth/register - יוצר מנהל חדש ומחזיר JWT להתחברות מיידית.
+    /// </summary>
+    /// <remarks>
+    /// הקלט מגיע מהלקוח כ-JSON ומכיל שם מנהל וסיסמה. הפעולה מעבירה את
+    /// הקלט ל-AuthService, שם מתבצעות בדיקות תקינות: שם מנהל לא ריק,
+    /// סיסמה באורך מינימלי ושם מנהל שאינו קיים כבר במסד. אם הרישום מצליח,
+    /// נוצר Manager חדש עם PasswordHash מוצפן, ואז נוצר טוקן בדיוק כמו
+    /// במסלול ההתחברות. המשמעות מבחינת המשתמש היא שלאחר רישום מוצלח אין
+    /// צורך להתחבר שוב ידנית.
+    /// </remarks>
+    [HttpPost("register")]
+    [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<LoginResponseDto>> Register(
+        [FromBody] RegisterRequestDto? request,
+        CancellationToken cancellationToken)
+    {
+        if (request is null)
+        {
+            return BadRequest(new { message = "בקשת רישום לא תקינה." });
+        }
+
+        var registrationResult = await _authService.RegisterAsync(
+            request.Email,
+            request.Password,
+            cancellationToken);
+
+        if (!registrationResult.Success || registrationResult.Manager is null)
+        {
+            return BadRequest(new { message = registrationResult.Error ?? "הרישום נכשל." });
+        }
+
+        var token = _jwtTokenService.CreateToken(
+            registrationResult.Manager.ManagerId,
+            registrationResult.Manager.Email,
+            registrationResult.Manager.ManagerName);
+
+        return Ok(new LoginResponseDto
+        {
+            Token = token,
+            ManagerId = registrationResult.Manager.ManagerId,
+            Email = registrationResult.Manager.Email,
+            ManagerName = registrationResult.Manager.ManagerName,
         });
     }
 }

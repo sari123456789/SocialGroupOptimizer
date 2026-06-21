@@ -3,22 +3,18 @@ using MyProject.Core.Domain.ValueObjects;
 namespace MyProject.BL.Algorithm.SolutionState;
 
 /// <summary>
-/// מצב פתרון — מיפוי שיבוץ, hash ייחודי וציון נוכחי.
+/// תפקיד המחלקה: מצב חלוקה פנימי לזמן ריצה — שני מיפויים מראים זה את זה.
+/// המחלקה משתתפת בכל שלבי החיפוש המקומי.
 /// </summary>
 /// <remarks>
-/// <para>תפקיד: ייצוג מוטable של חלוקה במהלך חיפוש מקומי — מילוני שיבוץ, ציון ו-hash לזיהוי מצבים.</para>
-/// <para>נקרא מ-: <see cref="Initialization.AssignmentStateFactory"/>,
-/// <see cref="LocalSearch.State.AssignmentStateCloner"/>,
-/// <see cref="LocalSearch.State.AssignmentStateUpdater"/>,
-/// <see cref="LocalSearch.State.AssignmentStateConverter"/>,
-/// <see cref="LocalSearch.RuntimeData.RuntimeDataBuilder"/>,
-/// <see cref="RuntimeState.RuntimeStateManager"/>.</para>
-/// <para>אין לשנות את המילונים ישירות — יש להשתמש ב-<see cref="LocalSearch.State.AssignmentStateUpdater"/>.</para>
+/// <para>ParticipantToGroup — משתתף לקבוצה: שליפה מהירה O(1) לפי משתתף.</para>
+/// <para>GroupToParticipants — קבוצה למשתתפים: עדכון יעיל של רשימת חברי קבוצה.</para>
+/// <para>שני הכיוונים נדרשים כי כל מהלך מעדכן גם את המשתתף וגם את רשימת הקבוצה.</para>
 /// </remarks>
 public sealed class AssignmentState
 {
     /// <summary>
-    /// יוצר מצב חלוקה — שני מילונים מirror + ציון + hash.
+
     /// </summary>
     public AssignmentState(
         Dictionary<ParticipantId, GroupId> participantToGroup,
@@ -42,7 +38,7 @@ public sealed class AssignmentState
             throw new ArgumentException("Assignment state must contain at least one participant.", nameof(participantToGroup));
         }
 
-        // שמירת references למילונים — AssignmentStateUpdater משנה אותם in-place.
+        
         ParticipantToGroup = participantToGroup;
         GroupToParticipants = groupToParticipants;
         CurrentScore = currentScore;

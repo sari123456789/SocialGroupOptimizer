@@ -6,10 +6,28 @@ using MyProject.Data.Models;
 
 namespace MyProject.API.Placement;
 
+/// <summary>
+/// מייבא חלוקה מלאה מקובץ Excel בעל גיליון יחיד ושומר אותה כחלוקה במערכת.
+/// </summary>
+/// <remarks>
+/// מחלקה זו מטפלת במסלול ייבוא שבו קובץ אחד מכיל גם משתתפים וגם הגדרות
+/// ואילוצים. היא אחראית על קריאת הנתונים, בניית Assignment, יצירת שיוכי
+/// משתתפים לחלוקה, שמירת סיווגים, שמירת זוגות חובה/אסורים ושמירת העדפות
+/// חברתיות. לאחר הייבוא, הנתונים נשמרים באותן טבלאות שבהן משתמשת המערכת
+/// גם בעריכה ידנית, ולכן המשך העבודה במסכים ובאלגוריתם זהה לחלוקה שנוצרה
+/// ידנית.
+///
+/// המחלקה אינה מריצה את האלגוריתם בעצמה. הפלט שלה הוא תוצאת ייבוא שמסבירה
+/// האם השמירה הצליחה ומה מזהה החלוקה שנוצרה. לאחר מכן ניתן להריץ אימות
+/// או חלוקה דרך השירותים הרגילים.
+/// </remarks>
 public sealed class AssignmentSingleSheetImporter
 {
+    // הקשר למסד — כל השמירה עוברת דרכו
     private readonly ApplicationDbContext _db;
+    // קורא את הגיליון מהאקסל
     private readonly ParticipantsExcelWorkbookReader _reader;
+    // בודק שהנתונים עומדים בכללים (גודל קבוצות וכו')
     private readonly ParticipantsExcelValidator _validator;
 
     public AssignmentSingleSheetImporter(
@@ -22,6 +40,7 @@ public sealed class AssignmentSingleSheetImporter
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
     }
 
+    // ייבוא מלא מקובץ אקסל — המסלול הראשי
     public async Task<ExcelImportResult> ImportAsync(
         Stream excelStream,
         int managerId,
@@ -31,30 +50,37 @@ public sealed class AssignmentSingleSheetImporter
         int maxGroupSize,
         CancellationToken cancellationToken = default)
     {
+        // קודם קוראים את השורות מהגיליון
         var parseResult = _reader.Read(excelStream);
+        // ואז בודקים שהכל תקין ביחס להגדרות הקבוצות
         var validationResult = _validator.Validate(
             parseResult,
             groupCount,
             minGroupSize,
             maxGroupSize);
 
+        // אם הוולידציה נכשלה — מחזירים רק שגיאות, בלי לגעת במסד
         if (!validationResult.IsValid)
         {
             return new ExcelImportResult { Errors = validationResult.Errors.ToList() };
         }
 
         var rows = parseResult.Rows;
+        // הופכים כל שורת אקסל לרשומת משתתף מנורמלת
         var participants = rows
             .Select(row => new ParsedParticipantRecord(
                 row.ParticipantId.Trim(),
                 row.FullName.Trim(),
-                row.Classifications))
+                row.Classifications,
+                row.Preferences))
             .ToList();
 
+        // אוספים זוגות חובה ואיסור מכל השורות
         var pairs = BuildPairs(rows);
         var mandatoryCount = pairs.Count(pair => pair.IsMandatory);
         var forbiddenCount = pairs.Count(pair => !pair.IsMandatory);
 
+        // בונים את הגדרות החלוקה (שם, מספר קבוצות, גדלים)
         var settings = new ParsedSettingsRecord(
             string.IsNullOrWhiteSpace(assignmentName) ? "חלוקה חדשה" : assignmentName.Trim(),
             groupCount,
@@ -62,6 +88,7 @@ public sealed class AssignmentSingleSheetImporter
             minGroupSize,
             maxGroupSize);
 
+        // שומרים הכל למסד בתוך טרנזקציה
         var assignmentId = await SaveAsync(
             participants,
             settings,
@@ -69,6 +96,7 @@ public sealed class AssignmentSingleSheetImporter
             managerId,
             cancellationToken);
 
+        // מחזירים סיכום מוצלח ללקוח
         return new ExcelImportResult
         {
             AssignmentId = assignmentId,
@@ -95,6 +123,7 @@ public sealed class AssignmentSingleSheetImporter
 
         var errors = new List<string>();
 
+        // חייב להיות לפחות משתתף אחד
         if (request.Participants.Count == 0)
         {
             errors.Add("יש לבחור לפחות משתתף אחד.");
@@ -115,20 +144,24 @@ public sealed class AssignmentSingleSheetImporter
             errors.Add("גודל קבוצה מינימום גדול מהמקסימום.");
         }
 
+        // כמה משתתפים בדיוק צריכים להיכנס לפי הגדרות הקבוצות
         var minCapacity = request.GroupCount * request.MinGroupSize;
         var maxCapacity = request.GroupCount * request.MaxGroupSize;
 
         var parsedParticipants = new List<ParsedParticipantRecord>();
+        // כדי שלא יכנסו שני משתתפים עם אותה ת.ז.
         var seenIdentities = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var entry in request.Participants)
         {
+            // מנרמלים ת.ז. — 9 ספרות, בלי .0 מאקסל
             if (!TryNormalizeIdentity(entry.ParticipantId, out var identity, out var identityError))
             {
                 errors.Add($"תעודת זהות {identityError}.");
                 continue;
             }
 
+            // כפילות — מדלגים בשקט (כבר נוסף)
             if (!seenIdentities.Add(identity))
             {
                 continue;
@@ -137,9 +170,11 @@ public sealed class AssignmentSingleSheetImporter
             parsedParticipants.Add(new ParsedParticipantRecord(
                 identity,
                 entry.DisplayName?.Trim() ?? string.Empty,
-                entry.Classifications));
+                entry.Classifications,
+                entry.Preferences ?? new List<string>()));
         }
 
+        // בודקים שהמספר מתאים לקיבולת
         if (parsedParticipants.Count < minCapacity || parsedParticipants.Count > maxCapacity)
         {
             errors.Add(
@@ -158,6 +193,7 @@ public sealed class AssignmentSingleSheetImporter
             request.MinGroupSize,
             request.MaxGroupSize);
 
+        // במסלול מהממשק אין זוגות — שולחים רשימה ריקה
         var assignmentId = await SaveAsync(
             parsedParticipants,
             settings,
@@ -176,6 +212,7 @@ public sealed class AssignmentSingleSheetImporter
         };
     }
 
+    // מנקה ת.ז. — חותך .0 מאקסל ומוודא 9 ספרות
     private static bool TryNormalizeIdentity(string raw, out string normalized, out string error)
     {
         normalized = string.Empty;
@@ -188,6 +225,7 @@ public sealed class AssignmentSingleSheetImporter
         }
 
         var trimmed = raw.Trim();
+        // אקסל לפעמים שומר מספר עם נקודה עשרונית
         var decimalSeparatorIndex = trimmed.IndexOf('.');
         if (decimalSeparatorIndex >= 0)
         {
@@ -203,6 +241,7 @@ public sealed class AssignmentSingleSheetImporter
         return true;
     }
 
+    // אוסף את כל זוגות החובה והאיסור מהשורות, בלי כפילויות
     private static List<ParsedPairRecord> BuildPairs(IReadOnlyList<ParsedParticipantRow> rows)
     {
         var pairs = new List<ParsedPairRecord>();
@@ -233,17 +272,20 @@ public sealed class AssignmentSingleSheetImporter
         return pairs;
     }
 
+    // מסדר שני מזהים בסדר קבוע — כדי שלא יהיו כפילויות (א,ב) ו-(ב,א)
     private static (string A, string B) OrderPair(string participantA, string participantB) =>
         string.CompareOrdinal(participantA, participantB) <= 0
             ? (participantA, participantB)
             : (participantB, participantA);
 
+    // מפתח ייחודי לזוג — לזיהוי כפילויות
     private static string PairKey(string participantA, string participantB)
     {
         var ordered = OrderPair(participantA, participantB);
         return $"{ordered.A}|{ordered.B}";
     }
 
+    // השמירה האמיתית — הכל בתוך טרנזקציה אחת
     private async Task<int> SaveAsync(
         IReadOnlyList<ParsedParticipantRecord> participants,
         ParsedSettingsRecord settings,
@@ -253,10 +295,12 @@ public sealed class AssignmentSingleSheetImporter
     {
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
 
+        // מוודאים שהמנהל קיים
         var manager = await _db.Managers
             .FirstOrDefaultAsync(entry => entry.ManagerId == managerId, cancellationToken)
             ?? throw new InvalidOperationException($"Manager {managerId} was not found.");
 
+        // כל חלוקה שייכת לקבוצת ניהול — מוצאים או יוצרים
         var managementGroup = await _db.ManagementGroups
             .FirstOrDefaultAsync(entry => entry.ManagerId == managerId, cancellationToken);
 
@@ -267,17 +311,21 @@ public sealed class AssignmentSingleSheetImporter
                 ManagerId = manager.ManagerId,
                 ManagementGroupName = $"קבוצת ניהול - {manager.ManagerName}",
             };
+            //הוספת קבוצת הניהול
             _db.ManagementGroups.Add(managementGroup);
             await _db.SaveChangesAsync(cancellationToken);
         }
 
+        // טוענים מימדי סיווג — ויוצרים חסרים לפי הצורך
         var dimensionByCode = await ClassificationCatalogHelper.LoadDimensionLookupAsync(_db, cancellationToken);
 
+        // טוענים רמות סיווג — ויוצרים חסרים לפי הצורך
         var levels = await _db.ClassificationLevels.ToListAsync(cancellationToken);
         var levelIdByDimensionAndCode = levels.ToDictionary(
             level => (level.ClassificationDimensionId, level.LevelCode),
             level => level.ClassificationLevelId);
 
+        // לפני שמירת משתתפים — מוודאים שכל מימד ורמה קיימים במאגר
         foreach (var participant in participants)
         {
             foreach (var (dimensionCode, levelCode) in participant.Classifications)
@@ -297,6 +345,7 @@ public sealed class AssignmentSingleSheetImporter
             }
         }
 
+        // משתתפים שכבר במערכת — מעדכנים שם; חדשים — יוצרים
         var identityNumbers = participants.Select(entry => entry.IdentityNumber).ToList();
         var existingParticipants = await _db.Participants
             .Where(participant => identityNumbers.Contains(participant.IsraeliIdentityNumber))
@@ -321,20 +370,24 @@ public sealed class AssignmentSingleSheetImporter
                 IsraeliIdentityNumber = participant.IdentityNumber,
                 ParticipantName = string.IsNullOrWhiteSpace(participant.Name) ? null : participant.Name,
             };
+            // הוספת משתתף חדש
             _db.Participants.Add(created);
             dbParticipants.Add(created);
         }
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        // יוצרים את רשומת החלוקה עצמה
         var assignment = new Assignment
         {
             AssignmentName = settings.AssignmentName,
             ManagementGroupId = managementGroup.ManagementGroupId,
         };
+        // הוספת החלוקה
         _db.Assignments.Add(assignment);
         await _db.SaveChangesAsync(cancellationToken);
 
+        // מקשרים כל משתתף לחלוקה
         var participantAssignments = dbParticipants
             .Select(participant => new ParticipantAssignment
             {
@@ -344,9 +397,11 @@ public sealed class AssignmentSingleSheetImporter
             })
             .ToList();
 
+        // הוספת שיוכי המשתתפים לחלוקה
         _db.ParticipantAssignments.AddRange(participantAssignments);
         await _db.SaveChangesAsync(cancellationToken);
 
+        // מילון ת.ז. → מזהה שיוך (צריך לזוגות ולהעדפות)
         var assignmentByIdentity = participantAssignments
             .Join(
                 dbParticipants,
@@ -359,6 +414,7 @@ public sealed class AssignmentSingleSheetImporter
                 })
             .ToDictionary(entry => entry.IsraeliIdentityNumber, entry => entry.ParticipantAssignmentId);
 
+        // שומרים סיווג לכל משתתף בחלוקה
         foreach (var parsedParticipant in participants)
         {
             var participantAssignmentId = assignmentByIdentity[parsedParticipant.IdentityNumber];
@@ -367,6 +423,7 @@ public sealed class AssignmentSingleSheetImporter
                 var dimension = dimensionByCode[dimensionCode];
                 var levelId = levelIdByDimensionAndCode[(dimension.ClassificationDimensionId, levelCode)];
 
+                // הוספת סיווג משתתף לחלוקה
                 _db.ParticipantClassifications.Add(new ParticipantClassification
                 {
                     ParticipantAssignmentId = participantAssignmentId,
@@ -376,6 +433,14 @@ public sealed class AssignmentSingleSheetImporter
             }
         }
 
+        // העדפות חברתיות — לפי סדר ברשימה
+        await ReplaceSocialPreferencesAsync(
+            assignment.AssignmentId,
+            participants,
+            assignmentByIdentity,
+            cancellationToken);
+
+        // הוספת אילוץ מספר קבוצות כולל
         _db.GroupCountConstraints.Add(new GroupCountConstraint
         {
             AssignmentId = assignment.AssignmentId,
@@ -383,8 +448,10 @@ public sealed class AssignmentSingleSheetImporter
             MaxGroups = settings.MaxGroups,
         });
 
+        // הוספת אילוץ גודל לכל קבוצה בנפרד
         for (var groupId = 1; groupId <= settings.MaxGroups; groupId++)
         {
+            // הוספת אילוץ גודל קבוצה
             _db.GroupSizeConstraints.Add(new GroupSizeConstraint
             {
                 AssignmentId = assignment.AssignmentId,
@@ -394,6 +461,7 @@ public sealed class AssignmentSingleSheetImporter
             });
         }
 
+        // זוגות חובה ואיסור
         foreach (var pair in pairs)
         {
             var firstParticipantAssignmentId = assignmentByIdentity[pair.ParticipantA];
@@ -401,6 +469,7 @@ public sealed class AssignmentSingleSheetImporter
 
             if (pair.IsMandatory)
             {
+                //הוספת זוג חובה
                 _db.MandatoryPairConstraints.Add(new MandatoryPairConstraint
                 {
                     AssignmentId = assignment.AssignmentId,
@@ -410,6 +479,7 @@ public sealed class AssignmentSingleSheetImporter
             }
             else
             {
+                // הוספת זוג אסור
                 _db.ForbiddenPairConstraints.Add(new ForbiddenPairConstraint
                 {
                     AssignmentId = assignment.AssignmentId,
@@ -425,11 +495,76 @@ public sealed class AssignmentSingleSheetImporter
         return assignment.AssignmentId;
     }
 
+    // מחליף את כל ההעדפות החברתיות של החלוקה (בייבוא חדש אין ישנות, אבל אותה לוגיקה)
+    private async Task ReplaceSocialPreferencesAsync(
+        int assignmentId,
+        IReadOnlyList<ParsedParticipantRecord> participants,
+        IReadOnlyDictionary<string, int> assignmentByIdentity,
+        CancellationToken cancellationToken)
+    {
+        var existingPreferences = await _db.SocialPreferences
+            .Where(preference => preference.AssignmentId == assignmentId)
+            .ToListAsync(cancellationToken);
+
+        if (existingPreferences.Count > 0)
+        {
+            // מחיקת כל ההעדפות החברתיות הקיימות של החלוקה לפני שמוסיפים חדשות
+            _db.SocialPreferences.RemoveRange(existingPreferences);
+        }
+
+        foreach (var participant in participants)
+        {
+            if (!assignmentByIdentity.TryGetValue(participant.IdentityNumber, out var fromParticipantAssignmentId))
+            {
+                continue;
+            }
+
+            var seenPreferredParticipants = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < participant.Preferences.Count; index++)
+            {
+                var rawPreferredIdentity = participant.Preferences[index];
+                if (!TryNormalizeIdentity(rawPreferredIdentity, out var preferredIdentity, out _))
+                {
+                    continue;
+                }
+
+                // לא מעדיפים את עצמנו
+                if (string.Equals(preferredIdentity, participant.IdentityNumber, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (!seenPreferredParticipants.Add(preferredIdentity))
+                {
+                    continue;
+                }
+
+                // המועדף חייב להיות בחלוקה
+                if (!assignmentByIdentity.TryGetValue(preferredIdentity, out var toParticipantAssignmentId))
+                {
+                    continue;
+                }
+
+                // הוספת העדפה חברתית — עם משקל לפי סדר הרשימה (1,2,3...)
+                _db.SocialPreferences.Add(new SocialPreference
+                {
+                    AssignmentId = assignmentId,
+                    FromParticipantAssignmentId = fromParticipantAssignmentId,
+                    ToParticipantAssignmentId = toParticipantAssignmentId,
+                    PreferenceWeight = index + 1,
+                });
+            }
+        }
+    }
+
+    // רשומת ביניים — משתתף אחרי פרסור
     private sealed record ParsedParticipantRecord(
         string IdentityNumber,
         string Name,
-        IReadOnlyDictionary<string, string> Classifications);
+        IReadOnlyDictionary<string, string> Classifications,
+        IReadOnlyList<string> Preferences);
 
+    // הגדרות החלוקה לשמירה
     private sealed record ParsedSettingsRecord(
         string AssignmentName,
         int MinGroups,
@@ -437,6 +572,7 @@ public sealed class AssignmentSingleSheetImporter
         int MinGroupSize,
         int MaxGroupSize);
 
+    // זוג חובה או איסור
     private sealed record ParsedPairRecord(bool IsMandatory, (string A, string B) Participants)
     {
         public string ParticipantA => Participants.A;

@@ -42,7 +42,9 @@ public static class CandidateDeduplicator
     }
 
     /// <summary>
-    /// בונה מפתח קנוני ל-move — בלתי-תלוי בסדר עבור Swap.
+    /// תפקיד הפונקציה: בונה מפתח קנוני לכל סוג מהלך — לזיהוי כפילויות.
+    /// קלט עיקרי: MoveCandidate.
+    /// פלט עיקרי: מחרוזת מפתח ייחודית.
     /// </summary>
     private static string BuildKey(MoveCandidate move)
     {
@@ -62,7 +64,9 @@ public static class CandidateDeduplicator
     }
 
     /// <summary>
-    /// מפתח Swap קנוני — מסדר את שני הקצוות לפי מזהה המשתתף.
+    /// תפקיד הפונקציה: מפתח Swap קנוני — Swap(A,B) זהה ל-Swap(B,A).
+    /// קלט עיקרי: MoveCandidate מסוג Swap.
+    /// פלט עיקרי: מחרוזת ממוינת לפי מזהה משתתף.
     /// </summary>
     private static string BuildSwapKey(MoveCandidate move)
     {

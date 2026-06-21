@@ -2,11 +2,17 @@ using MyProject.SolverService.Contracts;
 
 namespace MyProject.SolverService.Validation;
 
+/// <summary>
+/// בדיקות תקינות על בקשת פותר לפני בניית מודל CP-SAT — חוסך זמן פותר על קלט שבור.
+/// </summary>
 public static class SolverJobRequestValidator
 {
     private const int MinTimeoutMs = 1;
     private const int MaxTimeoutMs = 300_000;
 
+    /// <summary>
+    /// מאמת את הבקשה. רשימה ריקה = הקלט תקין.
+    /// </summary>
     public static List<string> Validate(SolverJobRequest? request)
     {
         var errors = new List<string>();
@@ -44,6 +50,7 @@ public static class SolverJobRequestValidator
                 errors.Add($"Placement unit {unit.UnitId} is empty.");
             }
 
+            // יחידת חובה עם משתתף יחיד = סתירה — חובה לפחות שניים ביחידה מסוג MandatoryUnit.
             if (unit.Kind == PlacementUnitKindWire.MandatoryUnit && unit.ParticipantIds.Count == 1)
             {
                 errors.Add($"Placement unit {unit.UnitId} is MandatoryUnit but has only one participant.");
@@ -79,12 +86,25 @@ public static class SolverJobRequestValidator
             totalMaxCapacity += group.MaxSize;
         }
 
+        // בדיקת קיבולת גלובלית — אם אין מספיק מקום, CP-SAT ייכשל בכל מקרה.
         if (totalMaxCapacity < totalParticipants)
         {
             errors.Add(
                 $"Total group max capacity ({totalMaxCapacity}) is less than participant count ({totalParticipants}).");
         }
 
+        if (request.MinGroups < 0)
+        {
+            errors.Add("minGroups cannot be negative.");
+        }
+
+        if (request.MinGroups > request.Groups.Count)
+        {
+            errors.Add(
+                $"minGroups ({request.MinGroups}) cannot exceed the number of groups ({request.Groups.Count}).");
+        }
+
+        // כל משתתף חייב להופיע בדיוק ביחידה אחת.
         var coveredParticipants = new HashSet<string>(StringComparer.Ordinal);
         foreach (var unit in request.PlacementUnits)
         {

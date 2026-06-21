@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Moves.CandidateProposal">
+    <Position X="1.75" Y="1" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAoAAAAIEAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Moves\CandidateProposal.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.LocalSearch.Moves.MoveCandidate">
+    <Position X="4" Y="1" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAIAAAAACAQAAAAABAAAAAAEAgBAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Moves\MoveCandidate.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Enum Name="MyProject.BL.Algorithm.LocalSearch.Moves.CandidateSource">
+    <Position X="1.75" Y="3.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAEAAIAAAAAAAEAAAAAAAAAAAAAAAAAgAQAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Moves\CandidateSource.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Enum Name="MyProject.BL.Algorithm.LocalSearch.Moves.MoveType">
+    <Position X="4" Y="4" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAQAAAAABAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\LocalSearch\Moves\MoveType.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

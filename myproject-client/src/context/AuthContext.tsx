@@ -13,12 +13,19 @@ import {
   loadAuthSession,
   type AuthSession,
 } from '../services/apiClient'
-import { login as loginRequest, verifySession, type LoginRequest } from '../services/authService'
+import {
+  login as loginRequest,
+  register as registerRequest,
+  verifySession,
+  type LoginRequest,
+  type RegisterRequest,
+} from '../services/authService'
 
 interface AuthContextValue {
   session: AuthSession | null
   isAuthenticated: boolean
   login: (request: LoginRequest) => Promise<void>
+  register: (request: RegisterRequest) => Promise<void>
   logout: () => void
 }
 
@@ -31,6 +38,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleLogin = useCallback(async (request: LoginRequest) => {
     const newSession = await loginRequest(request)
+    setSession(newSession)
+  }, [])
+
+  const handleRegister = useCallback(async (request: RegisterRequest) => {
+    const newSession = await registerRequest(request)
     setSession(newSession)
   }, [])
 
@@ -62,9 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       session,
       isAuthenticated: session !== null,
       login: handleLogin,
+      register: handleRegister,
       logout,
     }),
-    [session, handleLogin, logout],
+    [session, handleLogin, handleRegister, logout],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

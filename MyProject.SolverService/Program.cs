@@ -3,6 +3,8 @@ using System.Text.Json.Serialization;
 using MyProject.SolverService.Jobs;
 using MyProject.SolverService.Solving;
 
+// שירות עצמאי לפתרון חלוקות באמצעות Google OR-Tools CP-SAT.
+// MyProject.BL שולח בקשה ב-HTTP, עוקב אחרי jobId ב-polling, ומתרגם את התוצאה חזרה לדומיין.
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers()
@@ -14,6 +16,7 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Singleton — מאגר בזיכרון, מנוע CP-SAT ומתזמר עבודות.
 builder.Services.AddSingleton<ISolverJobStore, InMemorySolverJobStore>();
 builder.Services.AddSingleton<CpSatPlacementSolver>();
 builder.Services.AddSingleton<SolverJobProcessor>();

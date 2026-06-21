@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Results.InfeasibilityExplanationBuilder">
+    <Position X="4.5" Y="0.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAgAAABAAAIAAAAAABAIAAABCAEABAEAgA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Results\InfeasibilityExplanationBuilder.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Results.InitialPlacementResult">
+    <Position X="7.5" Y="0.75" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAgWAAAAAQAAAAAAAQAAAgAAAAgACAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Results\InitialPlacementResult.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Results.InitialPlacementUserMessages">
+    <Position X="1.5" Y="0.75" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AAhAAAgAAAAAIAgAAAAAgAEBAQACAAAAAAAAAYAAAIA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Results\InitialPlacementUserMessages.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Enum Name="MyProject.BL.Algorithm.InitialPlacement.Results.InitialPlacementStatus">
+    <Position X="5" Y="3.25" Width="1.75" />
+    <TypeIdentifier>
+      <HashCode>AgAAAAgSAAAAAAAAAAAAAAAAAgAAAAgACAAAAAAAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Results\InitialPlacementStatus.cs</FileName>
+    </TypeIdentifier>
+  </Enum>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

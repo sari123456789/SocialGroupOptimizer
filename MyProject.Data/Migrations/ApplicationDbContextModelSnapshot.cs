@@ -35,9 +35,15 @@ namespace MyProject.Data.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<double?>("LastInitialPlacementScore")
+                        .HasColumnType("float");
+
                     b.Property<string>("LastPlacementGroupsJson")
                         .HasMaxLength(8000)
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("LastPlacementScore")
+                        .HasColumnType("float");
 
                     b.Property<string>("LastPlacementStatus")
                         .HasMaxLength(64)
@@ -310,6 +316,11 @@ namespace MyProject.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ManagerId"));
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<string>("ManagerName")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -322,7 +333,7 @@ namespace MyProject.Data.Migrations
 
                     b.HasKey("ManagerId");
 
-                    b.HasIndex("ManagerName")
+                    b.HasIndex("Email")
                         .IsUnique();
 
                     b.ToTable("Managers");

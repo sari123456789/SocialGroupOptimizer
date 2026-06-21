@@ -16,6 +16,7 @@ public sealed class Preference
     /// <exception cref="ArgumentOutOfRangeException">נזרק כאשר <paramref name="rank"/> קטן או שווה לאפס.</exception>
     public Preference(ParticipantId preferredParticipantId, int rank)
     {
+        // דירוג חיובי; 1 מציין את ההעדפה החזקה ביותר.
         if (rank <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(rank), "Preference rank must be greater than zero.");

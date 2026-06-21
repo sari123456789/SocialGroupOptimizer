@@ -13,10 +13,10 @@ public sealed class AssignmentImprovementInput
     /// יוצר קלט שיפור.
     /// </summary>
     public AssignmentImprovementInput(
-        Assignment initialAssignment,
-        IReadOnlyList<Participant> participants,
-        IReadOnlyList<IConstraint> constraints,
-        ScoringWeights scoringWeights)
+        Assignment initialAssignment, // חלוקה ראשונית חוקית מ-Initial Placement
+        IReadOnlyList<Participant> participants, // כל המשתתפים — לניקוד ול-Local Search
+        IReadOnlyList<IConstraint> constraints, // אילוצים — ל-Local Search ולאימות סופי
+        ScoringWeights scoringWeights) // משקלות ניקוד
     {
         InitialAssignment = initialAssignment ?? throw new ArgumentNullException(nameof(initialAssignment));
         Participants = participants ?? throw new ArgumentNullException(nameof(participants));

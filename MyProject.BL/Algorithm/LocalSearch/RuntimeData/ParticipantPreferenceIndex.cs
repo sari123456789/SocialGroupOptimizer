@@ -48,10 +48,10 @@ public sealed class ParticipantPreferenceIndex
         }
 
         // מילונים לחיפוש O(1) במהלך Local Search (אלפי קריאות).
-        var preferencesByParticipant = new Dictionary<ParticipantId, IReadOnlyList<Preference>>();
-        var preferredParticipantIdsByParticipant = new Dictionary<ParticipantId, HashSet<ParticipantId>>();
-        var participantsWhoPrefer = new Dictionary<ParticipantId, List<ParticipantId>>();
-        var rankByParticipantPair = new Dictionary<ParticipantId, Dictionary<ParticipantId, int>>();
+        var preferencesByParticipant = new Dictionary<ParticipantId, IReadOnlyList<Preference>>();// משתתף רשימת העדפות ממוינת לפי Rank
+        var preferredParticipantIdsByParticipant = new Dictionary<ParticipantId, HashSet<ParticipantId>>();//מילון לשמירת מזהי משתתפים שהמשתתף העדיף (לבדיקה מהירה אם משתתף מסוים נמצא ברשימת ההעדפות)
+        var participantsWhoPrefer = new Dictionary<ParticipantId, List<ParticipantId>>();// משתתף רשימת משתתפים שהעדיפו אותו (כיוון הפוך)
+        var rankByParticipantPair = new Dictionary<ParticipantId, Dictionary<ParticipantId, int>>();//מילון לשמירת דירוג (Rank) של העדפה בין זוג משתתפים (מי העדיף את מי ובאיזה סדר)
 
         foreach (var participant in participants)
         {

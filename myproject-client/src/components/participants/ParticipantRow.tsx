@@ -4,13 +4,13 @@ import {
   getDisplayLabel,
   getParticipantInitial,
 } from '../../utils/participantDisplay'
+import { ParticipantNameWithId } from './ParticipantNameWithId'
 
 interface ParticipantRowProps {
   participant: ParticipantListItem
 }
 
 export function ParticipantRow({ participant }: ParticipantRowProps) {
-  const label = getDisplayLabel(participant.displayName, participant.participantId)
   const initial = getParticipantInitial(participant.displayName, participant.participantId)
   const avatarColor = getAvatarColorClass(participant.participantId)
 
@@ -23,8 +23,23 @@ export function ParticipantRow({ participant }: ParticipantRowProps) {
       </div>
 
       <div className="min-w-0 flex-1">
-        <h3 className="truncate font-medium text-slate-900">{label}</h3>
-        <p className="truncate text-sm text-slate-500">{participant.participantId}</p>
+        <h3 className="truncate">
+          <ParticipantNameWithId
+            participantId={participant.participantId}
+            displayName={participant.displayName}
+          />
+        </h3>
+        {participant.preferences && participant.preferences.length > 0 && (
+          <p className="mt-1 text-xs text-slate-500">
+            העדפות:{' '}
+            {participant.preferences.map((preference, index) => (
+              <span key={`${preference.participantId}-${preference.rank}`}>
+                {index > 0 && ' · '}
+                {preference.rank}. {getDisplayLabel(preference.displayName, preference.participantId)}
+              </span>
+            ))}
+          </p>
+        )}
       </div>
 
       <div className="hidden flex-wrap justify-end gap-1 sm:flex">

@@ -47,6 +47,7 @@ public sealed class ForbiddenPairConstraint : IConstraint
         var groupOfA = assignment.Groups.FirstOrDefault(g => g.ParticipantIds.Contains(ParticipantA));
         var groupOfB = assignment.Groups.FirstOrDefault(g => g.ParticipantIds.Contains(ParticipantB));
 
+        // משתתף שלא שובץ עדיין — לא נכשלים; נבדוק רק כששניהם בחלוקה.
         if (groupOfA is null || groupOfB is null)
         {
             return true;

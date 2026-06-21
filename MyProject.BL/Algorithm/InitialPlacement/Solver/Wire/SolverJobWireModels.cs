@@ -52,6 +52,9 @@ public sealed class SolverJobSubmitWire
     /// <summary>מגבלת זמן במילישניות.</summary>
     public int TimeoutMs { get; set; }
 
+    /// <summary>מספר הקבוצות המינימלי שחייבות להיות בשימוש; 0 = ללא חסם תחתון.</summary>
+    public int MinGroups { get; set; }
+
     /// <summary>משתתפים עם סיווגים.</summary>
     public List<SolverParticipantWire> Participants { get; set; } = new();
 

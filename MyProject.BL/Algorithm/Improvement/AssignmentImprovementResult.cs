@@ -15,7 +15,8 @@ public sealed class AssignmentImprovementResult
         bool hadImprovement,
         LocalSearchResult? searchResult,
         Score? initialScore,
-        Score? finalScore)
+        Score? finalScore,
+        GroupRebalanceDiagnostics? groupRebalanceDiagnostics = null)
     {
         Assignment = assignment ?? throw new ArgumentNullException(nameof(assignment));
         LocalSearchRan = localSearchRan;
@@ -23,6 +24,7 @@ public sealed class AssignmentImprovementResult
         SearchResult = searchResult;
         InitialScore = initialScore;
         FinalScore = finalScore;
+        GroupRebalanceDiagnostics = groupRebalanceDiagnostics;
     }
 
     /// <summary>חלוקה סופית — משופרת או מקורית.</summary>
@@ -42,6 +44,9 @@ public sealed class AssignmentImprovementResult
 
     /// <summary>ציון אחרי Local Search — null אם דולג.</summary>
     public Score? FinalScore { get; }
+
+    /// <summary>אבחון GroupRebalance fallback — null אם Local Search כובה.</summary>
+    public GroupRebalanceDiagnostics? GroupRebalanceDiagnostics { get; }
 
     /// <summary>חיפוש מקומי לא רץ — מחזיר חלוקה מקורית.</summary>
     public static AssignmentImprovementResult Skipped(Assignment assignment, Score initialScore)
@@ -73,12 +78,36 @@ public sealed class AssignmentImprovementResult
             throw new ArgumentNullException(nameof(searchResult));
         }
 
+        return Improved(assignment, searchResult, searchResult.InitialScore);
+    }
+
+    /// <summary>
+    /// חיפוש מקומי הסתיים — כולל fallback של GroupRebalance שקוף בחלוקה המוחזרת.
+    /// <paramref name="overallInitialScore"/> הוא הציון לפני כל שלבי השיפור.
+    /// </summary>
+    public static AssignmentImprovementResult Improved(
+        Assignment assignment,
+        LocalSearchResult searchResult,
+        Score overallInitialScore,
+        GroupRebalanceDiagnostics? groupRebalanceDiagnostics = null)
+    {
+        if (assignment is null)
+        {
+            throw new ArgumentNullException(nameof(assignment));
+        }
+
+        if (searchResult is null)
+        {
+            throw new ArgumentNullException(nameof(searchResult));
+        }
+
         return new AssignmentImprovementResult(
             assignment,
             localSearchRan: true,
-            hadImprovement: searchResult.HadImprovement,
+            hadImprovement: searchResult.FinalScore.Value > overallInitialScore.Value,
             searchResult,
-            searchResult.InitialScore,
-            searchResult.FinalScore);
+            overallInitialScore,
+            searchResult.FinalScore,
+            groupRebalanceDiagnostics);
     }
 }

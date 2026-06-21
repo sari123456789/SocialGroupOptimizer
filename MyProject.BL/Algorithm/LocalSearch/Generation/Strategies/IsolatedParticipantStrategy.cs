@@ -6,7 +6,8 @@ using MyProject.BL.Algorithm.SolutionState;
 namespace MyProject.BL.Algorithm.LocalSearch.Generation.Strategies;
 
 /// <summary>
-/// אסטרטגיית משתתפים מבודדים.
+/// תפקיד המחלקה: אסטרטגיית משתתפים מבודדים — מזהה מי בלי אף העדפה ממומשת בקבוצה.
+/// המחלקה משתתפת בשלב יצירת מועמדים — מציעה Swap — החלפה — לכיוון קבוצות עם העדפות.
 /// </summary>
 public sealed class IsolatedParticipantStrategy : IMoveCandidateStrategy
 {

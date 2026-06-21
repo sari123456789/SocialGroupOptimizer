@@ -3,10 +3,16 @@ using MyProject.BL.Algorithm.LocalSearch.Evaluation;
 namespace MyProject.BL.Algorithm.LocalSearch.Selection;
 
 /// <summary>
-/// אסטרטגיית השיפור הטוב ביותר — בוחרת ScoreDelta מקסימלי בין חוקיים, לא-visited ומשפרים.
+/// תפקיד המחלקה: בחירת המהלך הטוב ביותר מתוך תוצאות ההערכה.
+/// המחלקה משתתפת בשלב בחירה — אחרי MoveEvaluationBatch.
 /// </summary>
 public sealed class BestImprovementSearchStrategy : ISearchStrategy
 {
+    /// <summary>
+    /// תפקיד הפונקציה: בוחרת מהלך חוקי, משפר ציון, שלא מחזיר למצב שכבר נבדק.
+    /// קלט עיקרי: רשימת תוצאות הערכה.
+    /// פלט עיקרי: SearchDecision — עם המהלך הנבחר או סיבת כשלון.
+    /// </summary>
     /// <inheritdoc />
     public SearchDecision SelectBest(IReadOnlyList<MoveEvaluationResult> results)
     {

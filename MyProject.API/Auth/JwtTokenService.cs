@@ -26,14 +26,14 @@ public sealed class JwtTokenService
     /// <summary>
     /// בונה טוקן חתום עם Claims של המנהל.
     /// </summary>
-    public string CreateToken(int managerId, string managerName)
+    public string CreateToken(int managerId, string email, string managerName)
     {
-        // Claims — "תעודות זהות" בתוך הטוקן. השרת קורא אותן ב-User.GetManagerId().
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, managerId.ToString()),
+            new Claim(ClaimTypes.Email, email),
             new Claim(ClaimTypes.Name, managerName),
-            new Claim("managerId", managerId.ToString()), // claim מותאם — קל לשליפה
+            new Claim("managerId", managerId.ToString()),
         };
 
         // SymmetricSecurityKey — מפתח סודי משותף; חייב להיות זהה ב-Program.cs (Validation).

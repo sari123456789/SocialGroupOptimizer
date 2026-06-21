@@ -3,6 +3,7 @@ using MyProject.Data.Import;
 
 namespace MyProject.API.Placement.Excel;
 
+// יוצר קובץ דוגמה להורדה — עם משתתפים לדוגמה
 public static class ParticipantsExcelTemplateGenerator
 {
     public const string TemplateFileName = "participants-template.xlsx";
@@ -12,6 +13,7 @@ public static class ParticipantsExcelTemplateGenerator
         using var workbook = new XLWorkbook();
         var sheet = workbook.Worksheets.Add(ParticipantsSheetColumnDefinitions.SheetName);
 
+        // שורת כותרות
         sheet.Cell(1, 1).Value = ParticipantsSheetColumnDefinitions.ParticipantId;
         sheet.Cell(1, 2).Value = ParticipantsSheetColumnDefinitions.FullName;
         sheet.Cell(1, 3).Value = "Class";
@@ -21,6 +23,7 @@ public static class ParticipantsExcelTemplateGenerator
         sheet.Cell(1, 7).Value = ParticipantsSheetColumnDefinitions.MandatoryWith;
         sheet.Cell(1, 8).Value = ParticipantsSheetColumnDefinitions.ForbiddenWith;
 
+        // שורות דוגמה — 4 משתתפים
         sheet.Cell(2, 1).SetValue("200000001");
         sheet.Cell(2, 2).Value = "יעל כהן";
         sheet.Cell(2, 3).Value = "י1";
@@ -51,6 +54,7 @@ public static class ParticipantsExcelTemplateGenerator
         sheet.Cell(5, 4).Value = "בינוני";
         sheet.Cell(5, 5).Value = "הומניטרי";
 
+        // ת.ז. כטקסט — שלא יהפוך למספר באקסל
         sheet.Column(1).Style.NumberFormat.Format = "@";
         sheet.Column(6).Style.NumberFormat.Format = "@";
         sheet.Column(7).Style.NumberFormat.Format = "@";

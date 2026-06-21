@@ -11,6 +11,8 @@ public static class DevelopmentDataSeeder
 {
     public const string DemoManagerName = "מנהל דמו";
 
+    public const string DemoManagerEmail = "demo@myproject.local";
+
     public const string DemoManagerPassword = "demo1234";
 
     private static readonly string[] DemoIdentityNumbers =
@@ -32,6 +34,7 @@ public static class DevelopmentDataSeeder
 
         var manager = new Manager
         {
+            Email = DemoManagerEmail,
             ManagerName = DemoManagerName,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(DemoManagerPassword),
         };
@@ -151,7 +154,7 @@ public static class DevelopmentDataSeeder
     {
         var demoManager = await db.Managers
             .FirstOrDefaultAsync(
-                manager => manager.ManagerName == DemoManagerName,
+                manager => manager.Email == DemoManagerEmail,
                 cancellationToken);
 
         if (demoManager is null || !string.IsNullOrWhiteSpace(demoManager.PasswordHash))

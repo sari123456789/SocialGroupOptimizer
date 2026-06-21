@@ -52,8 +52,6 @@ public sealed class SolverInputBuilder
         ConflictGraph conflictGraph,
         AlgorithmSettings? settings = null)
     {
-        // settings שמור לשימוש עתידי — מסמנים כלא בשימוש כדי למנוע אזהרת קומפיילר.
-        _ = settings;
 
         if (input is null)
         {
@@ -101,12 +99,18 @@ public sealed class SolverInputBuilder
         var participants = BuildParticipants(input);
         var classificationConstraints = BuildClassificationConstraints(input);
 
+        // מספר הקבוצות המינימלי מאפשר לפותר להשתמש בפחות קבוצות מהמקסימום.
+        var minGroups = input.Constraints
+            .OfType<GroupCountConstraint>()
+            .FirstOrDefault()?.MinGroups ?? 0;
+
         return SolverInputBuildResult.Success(new SolverRequest(
             participants,
             placementUnits!,
             groups!,
             forbiddenUnitPairs,
-            classificationConstraints));
+            classificationConstraints,
+            minGroups));
     }
 
     private static bool TryBuildPlacementUnits(
@@ -326,17 +330,6 @@ public sealed class SolverInputBuilder
             // switch על סוג אילוץ — כל case מתרגם ל-DTO אחיד לפותר.
             switch (constraint)
             {
-                case ClassificationBalanceConstraint balance:
-                    requests.Add(new SolverClassificationConstraintRequest(
-                        ConstraintKind: nameof(ClassificationBalanceConstraint),
-                        TargetDimension: balance.TargetDimension.ToString(),
-                        TargetLevel: balance.TargetLevel.ToString(),
-                        MinCountPerGroup: balance.MinCountPerGroup,
-                        MaxCountPerGroup: balance.MaxCountPerGroup,
-                        AllowedLevels: null,
-                        MaxScaledDeviation: null));
-                    break;
-
                 case ClassificationProportionalBalanceConstraint proportional:
                     requests.Add(new SolverClassificationConstraintRequest(
                         ConstraintKind: nameof(ClassificationProportionalBalanceConstraint),

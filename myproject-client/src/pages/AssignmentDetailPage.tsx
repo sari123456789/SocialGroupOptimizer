@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import { AssignmentConstraintsTab } from '../components/assignment/AssignmentConstraintsTab'
 import { AssignmentOverviewTab } from '../components/assignment/AssignmentOverviewTab'
 import { AssignmentParticipantsTab } from '../components/assignment/AssignmentParticipantsTab'
+import { ParticipantExplanationDialog } from '../components/assignment/ParticipantExplanationDialog'
+import { ManualMoveDialog } from '../components/assignment/ManualMoveDialog'
 import { AppShell } from '../components/layout/AppShell'
 import {
   addClassificationConstraint,
@@ -40,6 +42,10 @@ export function AssignmentDetailPage() {
   const [validating, setValidating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [explainParticipantId, setExplainParticipantId] = useState<string | null>(
+    null,
+  )
+  const [manualMoveOpen, setManualMoveOpen] = useState(false)
 
   const [editingSettings, setEditingSettings] = useState(false)
   const [assignmentName, setAssignmentName] = useState('')
@@ -232,6 +238,8 @@ export function AssignmentDetailPage() {
                 onMaxGroupsChange={setMaxGroups}
                 onMinGroupSizeChange={setMinGroupSize}
                 onMaxGroupSizeChange={setMaxGroupSize}
+                onExplainParticipant={setExplainParticipantId}
+                onManualMove={() => setManualMoveOpen(true)}
               />
             )}
 
@@ -315,6 +323,36 @@ export function AssignmentDetailPage() {
             )}
           </div>
         </div>
+      )}
+
+      {explainParticipantId && detail && (
+        <ParticipantExplanationDialog
+          assignmentId={detail.assignmentId}
+          participantId={explainParticipantId}
+          displayName={
+            detail.participants.find(
+              (participant) => participant.participantId === explainParticipantId,
+            )?.displayName
+          }
+          participants={detail.participants}
+          onClose={() => setExplainParticipantId(null)}
+          onApplied={(updated) => {
+            setDetail(updated)
+            resetSettingsForm(updated)
+            setExplainParticipantId(null)
+          }}
+        />
+      )}
+
+      {manualMoveOpen && detail && (
+        <ManualMoveDialog
+          detail={detail}
+          onClose={() => setManualMoveOpen(false)}
+          onApplied={(updated) => {
+            setDetail(updated)
+            resetSettingsForm(updated)
+          }}
+        />
       )}
     </AppShell>
   )

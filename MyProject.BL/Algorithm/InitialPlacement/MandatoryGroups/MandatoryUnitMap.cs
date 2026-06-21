@@ -20,7 +20,6 @@ public sealed class MandatoryUnitMap
         IReadOnlyDictionary<ParticipantId, int> unitIdByParticipant,
         IReadOnlyDictionary<int, List<ParticipantId>> units)
     {
-        // שני המילונים נבנים יחד ב-MandatoryGroupBuilder — אין ולידציה כאן (כבר נבדק שם).
         UnitIdByParticipant = unitIdByParticipant;
         Units = units;
     }

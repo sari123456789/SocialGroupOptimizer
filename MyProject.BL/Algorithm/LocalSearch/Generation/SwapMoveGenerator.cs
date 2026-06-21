@@ -32,8 +32,8 @@ public sealed class SwapMoveGenerator
             throw new ArgumentNullException(nameof(settings));
         }
 
-        // CandidateCount > 0 מובטח ב-AlgorithmSettings — שומרים מקומית למגבלת Take.
-        _candidateLimit = settings.CandidateCount;
+        // CandidateCount > 0 מובטח ב-AlgorithmSettings — שומרים מקומית למגבלת .
+        _candidateLimit = settings.CandidateCount; //מספר מועמדים שיבחנו
     }
 
     /// <summary>

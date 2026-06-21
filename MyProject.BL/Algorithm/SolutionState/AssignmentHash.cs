@@ -51,7 +51,7 @@ public readonly record struct AssignmentHash
     /// </remarks>
     public static ulong ComputeContribution(ParticipantId participantId, GroupId groupId)
     {
-        // מפתח טקסטואלי ייחודי לזוג — מפריד | מונע התנגשויות (למשל "1|23" לעומת "12|3").
+        // מפתח טקסטואלי ייחודי לזוג — מפריד | מונע התנגשויות (למשל "1|23" לעומת "31|2").
         var key = FormContributionKey(participantId, groupId);
         // FNV-1a 64-bit — hash מהיר ויציב לכל תרומה בודדת.
         return ComputeFnv1a64(key);

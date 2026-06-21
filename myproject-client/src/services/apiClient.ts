@@ -3,6 +3,7 @@ const AUTH_STORAGE_KEY = 'myproject.auth'
 export interface AuthSession {
   token: string
   managerId: number
+  email: string
   managerName: string
 }
 

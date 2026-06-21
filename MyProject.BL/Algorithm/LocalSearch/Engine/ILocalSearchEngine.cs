@@ -11,4 +11,6 @@ public interface ILocalSearchEngine
     /// <param name="input">קלט — מצב, משתתפים, אילוצים ומשקלות.</param>
     /// <returns>תוצאת החיפוש.</returns>
     LocalSearchResult Improve(LocalSearchInput input);
+
+    
 }

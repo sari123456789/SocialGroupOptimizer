@@ -32,3 +32,19 @@ export function getDisplayLabel(
 ): string {
   return displayName?.trim() || participantId
 }
+
+export function getParticipantSelectLabel(
+  displayName: string | null | undefined,
+  participantId: string,
+  groupId?: number | null,
+): string {
+  const name = displayName?.trim()
+  const core = name ? `${name} (${participantId})` : participantId
+  return groupId != null ? `${core} (קבוצה ${groupId})` : core
+}
+
+export function hasDisplayName(
+  displayName: string | null | undefined,
+): boolean {
+  return Boolean(displayName?.trim())
+}

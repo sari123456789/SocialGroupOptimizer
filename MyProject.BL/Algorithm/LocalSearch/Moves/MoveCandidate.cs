@@ -3,10 +3,11 @@ using MyProject.Core.Domain.ValueObjects;
 namespace MyProject.BL.Algorithm.LocalSearch.Moves;
 
 /// <summary>
-/// הצעת שינוי (move) על מצב חלוקה — Swap או Transfer.
+/// תפקיד המחלקה: מבנה שמייצג מהלך אפשרי בחלוקה.
+/// המחלקה משתתפת בשלב יצירת מועמדים והערכתם בחיפוש המקומי.
 /// </summary>
 /// <remarks>
-/// נקרא מ-: MoveGenerator (עתידי), <see cref="State.AssignmentStateUpdater"/>.
+/// שני סוגי המהלכים: Swap — החלפה, Transfer — העברה.
 /// </remarks>
 public sealed class MoveCandidate
 {

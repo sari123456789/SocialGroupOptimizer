@@ -153,6 +153,7 @@ public sealed class FriendClusterIndex
         Dictionary<ParticipantId, HashSet<ParticipantId>> adjacency,
         HashSet<ParticipantId> visited)
     {
+        // DFS — חיפוש לעומק — עם Stack — מחסנית — לאוסף רכיב קשיר (אשכול חברים).
         var clusterMembers = new List<ParticipantId>();
         var stack = new Stack<ParticipantId>();
         stack.Push(startParticipantId);

@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Placement.GreedyGroupCandidateScorer">
+    <Position X="4.5" Y="1.5" Width="2.5" />
+    <TypeIdentifier>
+      <HashCode>AIAAACAAgAAAAAIAAAABAAAAAAAAgAAAABAgAAAAYAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Placement\GreedyGroupCandidateScorer.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Placement.GreedyPlacementBuilder">
+    <Position X="7.25" Y="1.5" Width="2.75" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAhQAgCCIAEQAAAAAAAAEAAAAAACQCA0AAAAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Placement\GreedyPlacementBuilder.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Placement.InitialFeasibilityDecider">
+    <Position X="2.25" Y="1.5" Width="2" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAIAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Placement\InitialFeasibilityDecider.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="MyProject.BL.Algorithm.InitialPlacement.Placement.LocalRepairEngine">
+    <Position X="10.25" Y="1.5" Width="2.25" />
+    <TypeIdentifier>
+      <HashCode>AgACAoAQASAgEAIAAAAEAAAAJAQAAICAAACAAAAAIAA=</HashCode>
+      <FileName>Algorithm\InitialPlacement\Placement\LocalRepairEngine.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

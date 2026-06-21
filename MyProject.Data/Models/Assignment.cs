@@ -21,5 +21,9 @@ public class Assignment
 
     public string? LastPlacementGroupsJson { get; set; }
 
+    public double? LastPlacementScore { get; set; }
+
+    public double? LastInitialPlacementScore { get; set; }
+
     public DateTime? LastValidatedAtUtc { get; set; }
 }
